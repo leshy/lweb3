@@ -37,8 +37,8 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000
         delete data._t
         @query { create: data }, queryToCallback callback
 
-    remove: (pattern,callback) -> 
-        @query { remove: pattern }, queryToCallback callback
+#    remove: (pattern,callback) -> 
+#        @query { remove: pattern }, queryToCallback callback
 
     findOne: (pattern,callback) ->
         @query { findOne: pattern }, queryToCallback callback
@@ -89,9 +89,9 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
         @subscribe { create: Object }, (msg, res, realm) ->
             c.createModel msg.create, realm, callbackToRes(res)
-            
-        @subscribe { remove: Object }, (msg, res, realm) ->
-            c.removeModel msg.remove, realm, callbackToRes(res)
+# this is my security model for now            
+#        @subscribe { remove: Object }, (msg, res, realm) ->
+#            c.removeModel msg.remove, realm, callbackToRes(res)
             
         @subscribe { update: Object, data: Object }, (msg, res, realm) ->
             c.updateModel msg.update, msg.data, realm, callbackToRes(res)
