@@ -8,21 +8,21 @@ util = require 'util'
 
 core = require '../core'
 
-webSocketChannel = exports.webSocketChannel = core.channel.extend4000
+engineIoChannel = exports.engineIoChannel = core.channel.extend4000
     defaults:
-        name: 'webSocket'
+        name: 'engineIo'
         
     initialize: ->
         realm = { client: @ }
         
-        @when 'socketIo', (@socketIo) =>
-            if id = @socketIo.id then @set name: id
-            @socketIo.on 'msg', (msg) =>
-                @trigger 'msg', msg
+        @when 'engineIo', (@engineIo) =>
+            if id = @engineIo.id then @set name: id
+            @engineIo.on 'message', (msg) =>
+                msg = JSON.parse(msg)
                 @log "<", msg
                 @event msg, realm
                 
-            @socketIo.on 'disconnect', =>
+            @engineIo.on 'close', =>
                 @trigger 'disconnect'
                 @log "Lost Connection"
                 @end()
@@ -33,13 +33,6 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
         
     send: (msg) ->
         @log ">", msg
-        try
-            JSON.stringify(msg)
-        catch err
-            console.error "cannot stringify", util.inspect msg, depth: 4, colors: true
-            throw err
-
-        @socketIo.emit 'msg', msg
-
+        @engineIo.send JSON.stringify(msg)
         
 
