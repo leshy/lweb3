@@ -38,7 +38,8 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
         catch err
             console.error "cannot stringify", util.inspect msg, depth: 4, colors: true
             throw err
-            
+
         @socketIo.emit 'msg', msg
+
         
 
