@@ -18,18 +18,18 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
         @when 'socketIo', (@socketIo) =>
             if id = @socketIo.id then @set name: id
             @socketIo.on 'msg', (msg) =>
-                @trigger 'msg', msg
                 @log "<", msg
                 @event msg, realm
-                
+                @trigger 'msg', msg
+                 
             @socketIo.on 'disconnect', =>
                 @trigger 'disconnect'
                 @log "Lost Connection"
                 @end()
                                     
-        @when 'parent', (parent) =>
-            parent.on 'end', => @end()
-            @on 'msg', (msg) => parent.event msg, realm
+            @when 'parent', (parent) =>
+                parent.on 'end', => @end()
+                @on 'msg', (msg) => parent.event msg, realm
         
     send: (msg) ->
         @log ">", msg
@@ -40,6 +40,4 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
             throw err
 
         @socketIo.emit 'msg', msg
-
-        
 

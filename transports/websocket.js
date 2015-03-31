@@ -27,7 +27,7 @@
       realm = {
         client: this
       };
-      this.when('socketIo', (function(_this) {
+      return this.when('socketIo', (function(_this) {
         return function(socketIo) {
           var id;
           _this.socketIo = socketIo;
@@ -37,24 +37,22 @@
             });
           }
           _this.socketIo.on('msg', function(msg) {
-            _this.trigger('msg', msg);
             _this.log("<", msg);
-            return _this.event(msg, realm);
+            _this.event(msg, realm);
+            return _this.trigger('msg', msg);
           });
-          return _this.socketIo.on('disconnect', function() {
+          _this.socketIo.on('disconnect', function() {
             _this.trigger('disconnect');
             _this.log("Lost Connection");
             return _this.end();
           });
-        };
-      })(this));
-      return this.when('parent', (function(_this) {
-        return function(parent) {
-          parent.on('end', function() {
-            return _this.end();
-          });
-          return _this.on('msg', function(msg) {
-            return parent.event(msg, realm);
+          return _this.when('parent', function(parent) {
+            parent.on('end', function() {
+              return _this.end();
+            });
+            return _this.on('msg', function(msg) {
+              return parent.event(msg, realm);
+            });
           });
         };
       })(this));

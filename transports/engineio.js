@@ -27,7 +27,7 @@
       realm = {
         client: this
       };
-      this.when('engineIo', (function(_this) {
+      return this.when('engineIo', (function(_this) {
         return function(engineIo) {
           var id;
           _this.engineIo = engineIo;
@@ -39,22 +39,21 @@
           _this.engineIo.on('message', function(msg) {
             msg = JSON.parse(msg);
             _this.log("<", msg);
-            return _this.event(msg, realm);
+            _this.event(msg, realm);
+            return _this.trigger('msg', msg);
           });
-          return _this.engineIo.on('close', function() {
+          _this.engineIo.on('close', function() {
             _this.trigger('disconnect');
             _this.log("Lost Connection");
             return _this.end();
           });
-        };
-      })(this));
-      return this.when('parent', (function(_this) {
-        return function(parent) {
-          parent.on('end', function() {
-            return _this.end();
-          });
-          return _this.on('msg', function(msg) {
-            return parent.event(msg, realm);
+          return _this.when('parent', function(parent) {
+            parent.on('end', function() {
+              return _this.end();
+            });
+            return _this.on('msg', function(msg) {
+              return parent.event(msg, realm);
+            });
           });
         };
       })(this));

@@ -40,7 +40,7 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
         @engineIo.on 'close', (engineIoClient) =>
             delete @clients[channel.get('name')]
             @trigger 'disconnect', channel
-            
+
     end: ->
         if @ended then return
         @ended = true
