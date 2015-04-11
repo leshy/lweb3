@@ -26,14 +26,9 @@
       this.set({
         engineIo: this.engineIo = engineio.Socket(this.get('host') || 'ws://' + (typeof window === "function" ? window(typeof location === "function" ? location(host) : void 0) : void 0))
       });
-      this.engineIo.on('open', (function(_this) {
+      return this.engineIo.on('open', (function(_this) {
         return function() {
           return _this.trigger('connect');
-        };
-      })(this));
-      return this.engineIo.on('close', (function(_this) {
-        return function() {
-          return _this.trigger('disconnect');
         };
       })(this));
     },
