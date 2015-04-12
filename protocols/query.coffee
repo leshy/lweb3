@@ -65,7 +65,7 @@ reply = core.core.extend4000
         return true
         
     end: (msg) ->
-        if not @ended then @ended = true else throw "this reply has ended"
+        if not @ended then @ended = true else console.error "this reply has ended"; return
         @unsubscribe()
         @parent.send msg, @id, true
         @trigger 'end'
