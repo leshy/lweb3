@@ -260,10 +260,8 @@
               });
             }
             if (msg.find) {
-              console.log('find', msg);
               return _this.applyPermission(_this.permissions.find, msg, realm, function(err, msg) {
                 var bucket, endCb;
-                console.log('afterperm', err, msg);
                 if (err) {
                   return res.end({
                     err: 'access denied'
@@ -301,7 +299,6 @@
       }
       return async.series(_.map(permissions, function(permission) {
         return function(callback) {
-          console.log('feeding', msg, 'to', permission.matchMsg);
           return permission.matchMsg.feed(msg, function(err, msg) {
             if (err) {
               return callback(null, err);

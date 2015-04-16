@@ -133,9 +133,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                             res.write err: err, data: data
 
                 if msg.find
-                    console.log 'find',msg
                     return @applyPermission @permissions.find, msg, realm, (err,msg) ->
-                        console.log 'afterperm',err,msg
                         if err then return res.end err: 'access denied'
                         bucket = new helpers.parallelBucket()
                         endCb = bucket.cb()
@@ -152,7 +150,6 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
     applyPermission: (permissions = [], msg, realm, callback) ->
         async.series _.map(permissions, (permission) ->
             (callback) ->
-                console.log 'feeding',msg,'to',permission.matchMsg
                 permission.matchMsg.feed msg, (err,msg) ->
                     if err then return callback null, err
                     if not permission.matchRealm then callback msg
