@@ -86,19 +86,18 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     @parent.parent.channel(name).broadcast action: 'create', create: data
 
 
-        if not permissionDef = @get('permissions') then console.warn "WARNING: no permissions for collection #{ name }, passing everything"
+        if not permDef = @get('permissions') then console.warn "WARNING: no permissions for collection #{ name }, passing everything"
         else
             @permissions = []
             
             msgTypes = [ 'find', 'findOne', 'create', 'remove', 'update', 'call' ]
             
-            permissionDef(
+            permDef(
                 helpers.dictMap msgTypes, (val,msgType) =>
-                    (matchMsg=Object, matchRealm) =>
-                        
-                        matchMsg = {}
-                        matchMsg[msgType] = matchMsg
-                        permission = { matchMsg: v(matchMsg) }
+                    (matchMsg, matchRealm) =>
+                        matchMsgVal = {}
+                        matchMsgVal[msgType] = matchMsg
+                        permission = { matchMsg: v(matchMsgVal) }
                         if matchRealm then permission.matchRealm = v(matchRealm)
                         @permissions.push permission)
             
@@ -106,7 +105,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         @when 'parent', (parent) =>
             parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
                 @applyPermissions msg, realm, (err, msg) =>
-                    if err or _.isEmpty(msg) then return res.end err: 'access denied'
+                    if err then return res.end err: 'access denied'
                     @event msg, res, realm
                     @core?.event msg.payload, msg.id, realm            
                        
@@ -158,7 +157,10 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                         else permission.matchRealm.feed realm, (err) ->
                             if err then callback null, err
                             else callback msg),
-                (data,err) -> callback err,data
+                (data,err) ->
+                    if data then callback null, data
+                    else callback true, data
+
                 
 
                         

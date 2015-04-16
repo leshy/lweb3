@@ -363,8 +363,19 @@
             if (err) {
               test.error(err);
             }
-            return x.remove(function() {
-              return test.done();
+            return x.remove(function(err, data) {
+              if (!err) {
+                test.eror('remove passed');
+              }
+              serverC.permissions.push({
+                matchMsg: v(true)
+              });
+              return x.remove(function(err, data) {
+                if (err) {
+                  test.error('remove didnt pass');
+                }
+                return test.done();
+              });
             });
           });
         });

@@ -114,7 +114,7 @@
 
   serverCollection = exports.serverCollection = collectionInterface.extend4000({
     initialize: function() {
-      var broadcast, c, callbackToRes, msgTypes, name, permissionDef;
+      var broadcast, c, callbackToRes, msgTypes, name, permDef;
       c = this.c = this.get('collection');
       this.set({
         name: name = c.get('name')
@@ -164,22 +164,19 @@
           })(this));
         }
       }
-      if (!(permissionDef = this.get('permissions'))) {
+      if (!(permDef = this.get('permissions'))) {
         console.warn("WARNING: no permissions for collection " + name + ", passing everything");
       } else {
         this.permissions = [];
         msgTypes = ['find', 'findOne', 'create', 'remove', 'update', 'call'];
-        permissionDef(helpers.dictMap(msgTypes, (function(_this) {
+        permDef(helpers.dictMap(msgTypes, (function(_this) {
           return function(val, msgType) {
             return function(matchMsg, matchRealm) {
-              var permission;
-              if (matchMsg == null) {
-                matchMsg = Object;
-              }
-              matchMsg = {};
-              matchMsg[msgType] = matchMsg;
+              var matchMsgVal, permission;
+              matchMsgVal = {};
+              matchMsgVal[msgType] = matchMsg;
               permission = {
-                matchMsg: v(matchMsg)
+                matchMsg: v(matchMsgVal)
               };
               if (matchRealm) {
                 permission.matchRealm = v(matchRealm);
@@ -199,7 +196,7 @@
             }
             return _this.applyPermissions(msg, realm, function(err, msg) {
               var ref;
-              if (err || _.isEmpty(msg)) {
+              if (err) {
                 return res.end({
                   err: 'access denied'
                 });
@@ -319,7 +316,11 @@
             });
           };
         }), function(data, err) {
-          return callback(err, data);
+          if (data) {
+            return callback(null, data);
+          } else {
+            return callback(true, data);
+          }
         });
       }
     }

@@ -217,8 +217,13 @@ exports.CollectionProtocolPermissions = (test) ->
                 
                 x.flush (err,data) ->
                     if err then test.error err
-                    x.remove ->
-                        test.done()
+                    x.remove (err,data) ->
+                        if not err then test.eror 'remove passed'
+
+                        serverC.permissions.push { matchMsg: v(true) }
+                        x.remove (err,data) ->
+                            if err then test.error 'remove didnt pass'
+                            test.done()
                 
 
 
@@ -227,9 +232,11 @@ class Test
     done: ->
         console.log 'test done'
         process.exit(0)
+        
     error: (err) ->
         console.log 'ERROR',err
         process.exit(0)
+        
     equal: (x,y) ->
         if x isnt y then throw "not equal"            
     deepEqual: -> true
