@@ -198,7 +198,6 @@ exports.CollectionProtocolPermissions = (test) ->
                     verbose: true
                     collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
 
-                
                 mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
                 serverM = mongoCollection.defineModel 'bla',
                     permissions: collectionsS.definePermissions (write, execute, read) ->

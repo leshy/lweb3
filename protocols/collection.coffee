@@ -69,11 +69,10 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
     initialize: ->
         c = @c = @get 'collection'
         @permissions = {}
-        
-        @set name: name =  c.get('name')
 
+        @set name: name =  c.get('name')
         if broadcast = @get 'broadcast' is true or broadcast is '*' then broadcast = update: true, remove: true, create: true
-        console.log broadcast
+
         if broadcast
             if broadcast.update            
                 @c.on 'update', (data) =>
@@ -115,9 +114,8 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                         
                 if msg.remove
                     return @applyPermission @permissions.remove, msg, realm, (err,msg) ->
-                        console.log "GOT",err,msg
                         if err then return res.end err: 'access denied'
-                        c.removeModel msg.remove, callbackToRes(res)
+                        c.removeModel msg.remove, realm, callbackToRes(res)
                         
                 if msg.findOne
                     return @applyPermission @permissions.findOne, msg, realm, (err,msg) ->
@@ -135,7 +133,9 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                             res.write err: err, data: data
 
                 if msg.find
+                    console.log 'find',msg
                     return @applyPermission @permissions.find, msg, realm, (err,msg) ->
+                        console.log 'afterperm',err,msg
                         if err then return res.end err: 'access denied'
                         bucket = new helpers.parallelBucket()
                         endCb = bucket.cb()
@@ -149,20 +149,19 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
                 #@core?.event msg.payload, msg.id, realm            
         
-    applyPermission: (permissions, msg, realm, callback) ->
-        if not permissions then return _.defer -> callback undefined, msg
-        else
-            async.series _.map(permissions, (permission) ->
-                (callback) ->
-                    permission.matchMsg.feed msg, (err,msg) ->
-                        if err then return callback null, err
-                        if not permission.matchRealm then callback msg
-                        else permission.matchRealm.feed realm, (err) ->
-                            if err then callback null, err
-                            else callback msg),
-                (data,err) ->
-                    if data then callback null, data
-                    else callback true, data
+    applyPermission: (permissions = [], msg, realm, callback) ->
+        async.series _.map(permissions, (permission) ->
+            (callback) ->
+                console.log 'feeding',msg,'to',permission.matchMsg
+                permission.matchMsg.feed msg, (err,msg) ->
+                    if err then return callback null, err
+                    if not permission.matchRealm then callback msg
+                    else permission.matchRealm.feed realm, (err) ->
+                        if err then callback null, err
+                        else callback msg),
+            (data,err) ->
+                if data then callback null, data
+                else callback true, data
 
 server = exports.server = collectionProtocol.extend4000
     defaults:

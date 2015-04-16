@@ -127,7 +127,6 @@
           create: true
         };
       }
-      console.log(broadcast);
       if (broadcast) {
         if (broadcast.update) {
           this.c.on('update', (function(_this) {
@@ -216,13 +215,12 @@
             }
             if (msg.remove) {
               return _this.applyPermission(_this.permissions.remove, msg, realm, function(err, msg) {
-                console.log("GOT", err, msg);
                 if (err) {
                   return res.end({
                     err: 'access denied'
                   });
                 }
-                return c.removeModel(msg.remove, callbackToRes(res));
+                return c.removeModel(msg.remove, realm, callbackToRes(res));
               });
             }
             if (msg.findOne) {
@@ -262,8 +260,10 @@
               });
             }
             if (msg.find) {
+              console.log('find', msg);
               return _this.applyPermission(_this.permissions.find, msg, realm, function(err, msg) {
                 var bucket, endCb;
+                console.log('afterperm', err, msg);
                 if (err) {
                   return res.end({
                     err: 'access denied'
@@ -296,38 +296,36 @@
       })(this));
     },
     applyPermission: function(permissions, msg, realm, callback) {
-      if (!permissions) {
-        return _.defer(function() {
-          return callback(void 0, msg);
-        });
-      } else {
-        return async.series(_.map(permissions, function(permission) {
-          return function(callback) {
-            return permission.matchMsg.feed(msg, function(err, msg) {
-              if (err) {
-                return callback(null, err);
-              }
-              if (!permission.matchRealm) {
-                return callback(msg);
-              } else {
-                return permission.matchRealm.feed(realm, function(err) {
-                  if (err) {
-                    return callback(null, err);
-                  } else {
-                    return callback(msg);
-                  }
-                });
-              }
-            });
-          };
-        }), function(data, err) {
-          if (data) {
-            return callback(null, data);
-          } else {
-            return callback(true, data);
-          }
-        });
+      if (permissions == null) {
+        permissions = [];
       }
+      return async.series(_.map(permissions, function(permission) {
+        return function(callback) {
+          console.log('feeding', msg, 'to', permission.matchMsg);
+          return permission.matchMsg.feed(msg, function(err, msg) {
+            if (err) {
+              return callback(null, err);
+            }
+            if (!permission.matchRealm) {
+              return callback(msg);
+            } else {
+              return permission.matchRealm.feed(realm, function(err) {
+                if (err) {
+                  return callback(null, err);
+                } else {
+                  return callback(msg);
+                }
+              });
+            }
+          });
+        };
+      }), function(data, err) {
+        if (data) {
+          return callback(null, data);
+        } else {
+          return callback(true, data);
+        }
+      });
     }
   });
 
