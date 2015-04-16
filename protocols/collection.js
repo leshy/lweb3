@@ -39,11 +39,13 @@
 
   clientCollection = exports.clientCollection = collectionInterface.extend4000({
     initialize: function() {
-      return this.parent.parent.channel(this.get('name')).join((function(_this) {
-        return function(msg) {
-          return _this.event(msg);
-        };
-      })(this));
+      if (this.get('autosubscribe') !== false) {
+        return this.parent.parent.channel(this.get('name')).join((function(_this) {
+          return function(msg) {
+            return _this.event(msg);
+          };
+        })(this));
+      }
     },
     subscribeModel: function(id, callback) {
       return this.parent.parent.channel(this.get('name') + ":" + id).join(function(msg) {
@@ -105,37 +107,52 @@
 
   serverCollection = exports.serverCollection = collectionInterface.extend4000({
     initialize: function() {
-      var c, callbackToRes, name;
+      var broadcast, c, callbackToRes, name;
       c = this.c = this.get('collection');
-      this.c.on('update', (function(_this) {
-        return function(data) {
-          var id;
-          if (id = data.id) {
-            return _this.parent.parent.channel(_this.get('name') + ":" + id).broadcast({
-              action: 'update',
-              update: data
-            });
-          }
+      if (broadcast = this.get('broadcast' === true || broadcast === '*')) {
+        broadcast = {
+          update: true,
+          remove: true,
+          create: true
         };
-      })(this));
-      this.c.on('remove', (function(_this) {
-        return function(data) {
-          var id;
-          if (id = data.id) {
-            return _this.parent.parent.channel(_this.get('name') + ":" + id).broadcast({
-              action: 'remove'
-            });
-          }
-        };
-      })(this));
-      this.c.on('create', (function(_this) {
-        return function(data) {
-          return _this.parent.parent.channel(name).broadcast({
-            action: 'create',
-            create: data
-          });
-        };
-      })(this));
+      }
+      if (broadcast) {
+        if (broadcast.update) {
+          this.c.on('update', (function(_this) {
+            return function(data) {
+              var id;
+              if (id = data.id) {
+                return _this.parent.parent.channel(_this.get('name') + ":" + id).broadcast({
+                  action: 'update',
+                  update: data
+                });
+              }
+            };
+          })(this));
+        }
+        if (broadcast.remove) {
+          this.c.on('remove', (function(_this) {
+            return function(data) {
+              var id;
+              if (id = data.id) {
+                return _this.parent.parent.channel(_this.get('name') + ":" + id).broadcast({
+                  action: 'remove'
+                });
+              }
+            };
+          })(this));
+        }
+        if (broadcast.create) {
+          this.c.on('create', (function(_this) {
+            return function(data) {
+              return _this.parent.parent.channel(name).broadcast({
+                action: 'create',
+                create: data
+              });
+            };
+          })(this));
+        }
+      }
       this.set({
         name: name = c.get('name')
       });
@@ -214,7 +231,7 @@
             var bucketCallback;
             bucketCallback = bucket.cb();
             return model.render(realm, function(err, data) {
-              if (!err) {
+              if (!err && !_.isEmpty(data)) {
                 res.write(data);
               }
               if (model.gCollect) {

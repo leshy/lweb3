@@ -23,7 +23,7 @@ queryToCallback = (callback) ->
         
 clientCollection = exports.clientCollection = collectionInterface.extend4000
     initialize: ->
-        @parent.parent.channel(@get('name')).join (msg) => @event msg
+        if @get('autosubscribe') isnt false then @parent.parent.channel(@get('name')).join (msg) => @event msg
         
     subscribeModel: (id,callback) ->
         @parent.parent.channel(@get('name') + ":" + id).join (msg) -> callback msg
@@ -66,16 +66,23 @@ client = exports.client = collectionProtocol.extend4000
 serverCollection = exports.serverCollection = collectionInterface.extend4000
     initialize: ->
         c = @c = @get 'collection'
-        
-        @c.on 'update', (data) =>
-            if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'update', update: data
-                
-        @c.on 'remove', (data) => # should get POST REMOVE data from event, so that it can transmit ids
-            if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'remove'
 
-        @c.on 'create', (data) =>
-            @parent.parent.channel(name).broadcast action: 'create', create: data
-                
+        if broadcast = @get 'broadcast' is true or broadcast is '*' then broadcast = update: true, remove: true, create: true
+
+        if broadcast
+            if broadcast.update            
+                @c.on 'update', (data) =>
+                    if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'update', update: data
+
+            if broadcast.remove
+                @c.on 'remove', (data) => # should get POST REMOVE data from event, so that it can transmit ids
+                    if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'remove'
+
+            if broadcast.create
+                @c.on 'create', (data) =>
+                    @parent.parent.channel(name).broadcast action: 'create', create: data
+
+
         @set name: name =  c.get('name')
         
         @when 'parent', (parent) =>
@@ -89,6 +96,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
         @subscribe { create: Object }, (msg, res, realm) ->
             c.createModel msg.create, realm, callbackToRes(res)
+            
 # this is my security model for now            
 #        @subscribe { remove: Object }, (msg, res, realm) ->
 #            c.removeModel msg.remove, realm, callbackToRes(res)
@@ -114,7 +122,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
             c.findModels msg.find, msg.limits or {}, ((err,model) ->
                 bucketCallback = bucket.cb()
                 model.render realm, (err,data) ->
-                    if not err then res.write data
+                    if not err and not _.isEmpty(data) then res.write data
                     if model.gCollect then model.gCollect()
                     bucketCallback()), ((err,data) -> endCb())
                     
