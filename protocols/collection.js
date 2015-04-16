@@ -63,6 +63,11 @@
         create: data
       }, queryToCallback(callback));
     },
+    remove: function(pattern, callback) {
+      return this.query({
+        remove: pattern
+      }, queryToCallback(callback));
+    },
     findOne: function(pattern, callback) {
       return this.query({
         findOne: pattern
@@ -105,10 +110,25 @@
     requires: [channel.client]
   });
 
+  exports.definePermissions = function(matchMsg, matchRealm) {
+    var permission;
+    permission = {};
+    if (matchMsg) {
+      permission.matchMsg = matchMsg;
+    }
+    if (matchRealm) {
+      permission.matchRealm = matchRealm;
+    }
+    return this.permissions.push(permission);
+  };
+
   serverCollection = exports.serverCollection = collectionInterface.extend4000({
     initialize: function() {
-      var broadcast, c, callbackToRes, name;
+      var broadcast, c, callbackToRes, msgTypes, name, permissionDef;
       c = this.c = this.get('collection');
+      this.set({
+        name: name = c.get('name')
+      });
       if (broadcast = this.get('broadcast' === true || broadcast === '*')) {
         broadcast = {
           update: true,
@@ -153,20 +173,47 @@
           })(this));
         }
       }
-      this.set({
-        name: name = c.get('name')
-      });
+      if (!(permissionDef = this.get('permissions'))) {
+        console.warn("no permissions for " + name);
+      } else {
+        this.permissions = [];
+        msgTypes = ['find', 'findOne', 'create', 'remove', 'update', 'call'];
+        permissionDef(helpers.dictMap(msgTypes, (function(_this) {
+          return function(msgType) {
+            return function(matchMsg, matchRealm) {
+              var permission;
+              if (matchMsg == null) {
+                matchMsg = Object;
+              }
+              permission = {};
+              permission.matchMsg = {};
+              permission.matchMsg[msgType] = matchMsg;
+              if (matchRealm) {
+                permission.matchRealm = matchRealm;
+              }
+              return _this.permissions.push(permission);
+            };
+          };
+        })(this)));
+      }
       this.when('parent', (function(_this) {
         return function(parent) {
           return parent.parent.onQuery({
             collection: name
           }, function(msg, res, realm) {
-            var ref;
             if (realm == null) {
               realm = {};
             }
-            _this.event(msg, res, realm);
-            return (ref = _this.core) != null ? ref.event(msg.payload, msg.id, realm) : void 0;
+            return _this.applyPermissions(msg, function(err, msg) {
+              var ref;
+              if (err || _.isEmpty(msg)) {
+                return res.end({
+                  err: 'access denied'
+                });
+              }
+              _this.event(msg, res, realm);
+              return (ref = _this.core) != null ? ref.event(msg.payload, msg.id, realm) : void 0;
+            });
           });
         };
       })(this));
@@ -185,6 +232,11 @@
         create: Object
       }, function(msg, res, realm) {
         return c.createModel(msg.create, realm, callbackToRes(res));
+      });
+      this.subscribe({
+        remove: Object
+      }, function(msg, res, realm) {
+        return c.removeModel(msg.remove, callbackToRes(res));
       });
       this.subscribe({
         update: Object,
@@ -247,6 +299,13 @@
           });
         };
       })(this));
+    },
+    applyPermissions: function(msg, callback) {
+      if (!this.get('permissions')) {
+        return _.defer(function() {
+          return callback(void 0, msg);
+        });
+      }
     }
   });
 

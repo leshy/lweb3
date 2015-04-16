@@ -8,19 +8,9 @@ express = require 'express'
 Http = require 'http'
 
 port = 8192
-
+colors = require 'colors'
 gimmeEnv = (callback) -> 
     app = express()
-    app.configure ->
-        app.set 'view engine', 'ejs'
-        app.use express.favicon()
-        app.use express.bodyParser()
-        app.use express.methodOverride()
-        app.use express.cookieParser()
-        app.use app.router
-        app.use (err, req, res, next) ->
-            res.send 500, 'BOOOM!'
-
     http = Http.createServer app
     
     # I dont know why but I need to cycle ports, maybe http doesn't fully close, I don't know man.
@@ -142,10 +132,7 @@ exports.queryServerServer = (test) ->
             test.deepEqual reply, { bla: 666 }
             done test
 
-            
-
 exports.CollectionProtocol = (test) ->
-    return test.done()
     mongodb = require 'mongodb'
     channel = require('./protocols/channel')
     query = require('./protocols/query')
@@ -157,31 +144,38 @@ exports.CollectionProtocol = (test) ->
             db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
             db.open (err,data) ->
                 if err then test.fail err
-                s.addProtocol new query.server( verbose: true )
-                c.addProtocol new query.client( verbose: true )
-                s.addProtocol new channel.server( verbose: true )
-                c.addProtocol new channel.client( verbose: true )
-
-                s.addProtocol new collectionProtocol.server
-                    verbose: true,
-                    collectionClass: collectionProtocol.serverCollection.extend4000 collectionsS.MongoCollection, { defaults: { db: db } }
-
-
+                s.addProtocol new query.server verbose: true
+                s.addProtocol new channel.server verbose: true
+                s.addProtocol new collectionProtocol.server verbose: true
+                
+                c.addProtocol new query.client verbose: true
+                c.addProtocol new channel.client verbose: true
                 c.addProtocol new collectionProtocol.client
-                    verbose: true,
-                    collectionClass: collectionProtocol.clientCollection.extend4000 collectionsC.ModelMixin, {}
+                    verbose: true
+                    collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
 
                 
-                serverC = s.collection('bla')
-                console.log serverC.defineModel
-                serverM = serverC.defineModel 'bla', {}
+                mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
+                serverM = mongoCollection.defineModel 'bla',
+                    permissions: collectionsS.definePermissions (write, execute, read) ->
+                        write 'test', new collectionsS.Permission()
+                        
                 
-                clientC = c.collection('bla')
+                serverC = s.collection 'bla',
+                    collection: mongoCollection
+                    broadcast: '*'
+                
+                clientC = c.collection 'bla'
                 clientM = clientC.defineModel 'bla', {}
                 
                 x = new clientM({test:'data' })
-                x.flush()
                 
+                x.flush (err,data) ->
+                    if err then test.error err
+                    x.remove ->
+                        test.done()
+                
+
 
 class Test
     done: ->
@@ -195,4 +189,4 @@ class Test
 
 #exports.QueryProtocol new Test()
 #exports.queryServerServer new Test()
-#exports.CollectionProtocol new Test()
+exports.CollectionProtocol new Test()

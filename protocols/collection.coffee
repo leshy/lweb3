@@ -24,7 +24,7 @@ queryToCallback = (callback) ->
 clientCollection = exports.clientCollection = collectionInterface.extend4000
     initialize: ->
         if @get('autosubscribe') isnt false then @parent.parent.channel(@get('name')).join (msg) => @event msg
-        
+
     subscribeModel: (id,callback) ->
         @parent.parent.channel(@get('name') + ":" + id).join (msg) -> callback msg
 
@@ -37,8 +37,8 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000
         delete data._t
         @query { create: data }, queryToCallback callback
 
-#    remove: (pattern,callback) -> 
-#        @query { remove: pattern }, queryToCallback callback
+    remove: (pattern,callback) -> 
+        @query { remove: pattern }, queryToCallback callback
 
     findOne: (pattern,callback) ->
         @query { findOne: pattern }, queryToCallback callback
@@ -63,12 +63,21 @@ client = exports.client = collectionProtocol.extend4000
         collectionClass: clientCollection
     requires: [ channel.client ]
     
+
+
+exports.definePermissions = (matchMsg,matchRealm) ->
+    permission = {}
+    if matchMsg then permission.matchMsg = matchMsg
+    if matchRealm then permission.matchRealm = matchRealm
+    @permissions.push permission    
+
+
 serverCollection = exports.serverCollection = collectionInterface.extend4000
     initialize: ->
         c = @c = @get 'collection'
+        @set name: name =  c.get('name')
 
         if broadcast = @get 'broadcast' is true or broadcast is '*' then broadcast = update: true, remove: true, create: true
-
         if broadcast
             if broadcast.update            
                 @c.on 'update', (data) =>
@@ -83,13 +92,29 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     @parent.parent.channel(name).broadcast action: 'create', create: data
 
 
-        @set name: name =  c.get('name')
-        
+        if not permissionDef = @get('permissions') then console.warn "no permissions for #{ name }"
+        else
+            @permissions = []
+            
+            msgTypes = [ 'find', 'findOne', 'create', 'remove', 'update', 'call' ]
+            
+            permissionDef(
+                helpers.dictMap msgTypes, (msgType) =>
+                    (matchMsg=Object, matchRealm) =>
+                        permission = {}
+                        permission.matchMsg = {}
+                        permission.matchMsg[msgType] = matchMsg
+                        if matchRealm then permission.matchRealm = matchRealm
+                        @permissions.push permission)
+            
+                        
         @when 'parent', (parent) =>
             parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
-                @event msg, res, realm
-                @core?.event msg.payload, msg.id, realm
-                
+                @applyPermissions msg, (err, msg) =>
+                    if err or _.isEmpty(msg) then return res.end err: 'access denied'
+                    @event msg, res, realm
+                    @core?.event msg.payload, msg.id, realm            
+                       
         callbackToRes = (res) -> (err,data) ->
             if err?.name then err = err.name
             res.end err: err, data: data
@@ -97,9 +122,8 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         @subscribe { create: Object }, (msg, res, realm) ->
             c.createModel msg.create, realm, callbackToRes(res)
             
-# this is my security model for now            
-#        @subscribe { remove: Object }, (msg, res, realm) ->
-#            c.removeModel msg.remove, realm, callbackToRes(res)
+        @subscribe { remove: Object }, (msg, res, realm) ->
+            c.removeModel msg.remove, callbackToRes(res)
             
         @subscribe { update: Object, data: Object }, (msg, res, realm) ->
             c.updateModel msg.update, msg.data, realm, callbackToRes(res)
@@ -126,8 +150,12 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     if model.gCollect then model.gCollect()
                     bucketCallback()), ((err,data) -> endCb())
                     
-            bucket.done (err,data) -> res.end()    
-
+            bucket.done (err,data) -> res.end()
+            
+    applyPermissions: (msg, callback) ->
+        if not @get 'permissions' then return _.defer -> callback undefined, msg
+            
+            
 server = exports.server = collectionProtocol.extend4000
     defaults:
         name: 'collectionServer'
