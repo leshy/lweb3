@@ -1,6 +1,7 @@
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 helpers = require 'helpers'
+async = require 'async'
 
 subscriptionMan = require('subscriptionman2')
 validator = require('validator2-extras'); v = validator.v
@@ -64,20 +65,13 @@ client = exports.client = collectionProtocol.extend4000
     requires: [ channel.client ]
     
 
-
-exports.definePermissions = (matchMsg,matchRealm) ->
-    permission = {}
-    if matchMsg then permission.matchMsg = matchMsg
-    if matchRealm then permission.matchRealm = matchRealm
-    @permissions.push permission    
-
-
 serverCollection = exports.serverCollection = collectionInterface.extend4000
     initialize: ->
         c = @c = @get 'collection'
         @set name: name =  c.get('name')
 
         if broadcast = @get 'broadcast' is true or broadcast is '*' then broadcast = update: true, remove: true, create: true
+        console.log broadcast
         if broadcast
             if broadcast.update            
                 @c.on 'update', (data) =>
@@ -92,25 +86,26 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     @parent.parent.channel(name).broadcast action: 'create', create: data
 
 
-        if not permissionDef = @get('permissions') then console.warn "no permissions for #{ name }"
+        if not permissionDef = @get('permissions') then console.warn "WARNING: no permissions for collection #{ name }, passing everything"
         else
             @permissions = []
             
             msgTypes = [ 'find', 'findOne', 'create', 'remove', 'update', 'call' ]
             
             permissionDef(
-                helpers.dictMap msgTypes, (msgType) =>
+                helpers.dictMap msgTypes, (val,msgType) =>
                     (matchMsg=Object, matchRealm) =>
-                        permission = {}
-                        permission.matchMsg = {}
-                        permission.matchMsg[msgType] = matchMsg
-                        if matchRealm then permission.matchRealm = matchRealm
+                        
+                        matchMsg = {}
+                        matchMsg[msgType] = matchMsg
+                        permission = { matchMsg: v(matchMsg) }
+                        if matchRealm then permission.matchRealm = v(matchRealm)
                         @permissions.push permission)
             
                         
         @when 'parent', (parent) =>
             parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
-                @applyPermissions msg, (err, msg) =>
+                @applyPermissions msg, realm, (err, msg) =>
                     if err or _.isEmpty(msg) then return res.end err: 'access denied'
                     @event msg, res, realm
                     @core?.event msg.payload, msg.id, realm            
@@ -152,10 +147,21 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     
             bucket.done (err,data) -> res.end()
             
-    applyPermissions: (msg, callback) ->
-        if not @get 'permissions' then return _.defer -> callback undefined, msg
-            
-            
+    applyPermissions: (msg, realm, callback) ->
+        if not @permissions then return _.defer -> callback undefined, msg
+        else
+            async.series _.map(@permissions, (permission) ->
+                (callback) ->
+                    permission.matchMsg.feed msg, (err,msg) ->
+                        if err then return callback null, err
+                        if not permission.matchRealm then callback msg
+                        else permission.matchRealm.feed realm, (err) ->
+                            if err then callback null, err
+                            else callback msg),
+                (data,err) -> callback err,data
+                
+
+                        
 server = exports.server = collectionProtocol.extend4000
     defaults:
         name: 'collectionServer'

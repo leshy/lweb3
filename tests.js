@@ -300,11 +300,89 @@
     });
   };
 
+  exports.CollectionProtocolPermissions = function(test) {
+    var channel, collectionProtocol, collectionsC, collectionsS, mongodb, query;
+    mongodb = require('mongodb');
+    channel = require('./protocols/channel');
+    query = require('./protocols/query');
+    collectionProtocol = require('./protocols/collection');
+    collectionsS = require('collections/serverside');
+    collectionsC = require('collections');
+    return gimmeEnv(function(lwebs, s, c, done) {
+      return helpers.wait(100, function() {
+        var db;
+        db = new mongodb.Db('testdb', new mongodb.Server('localhost', 27017), {
+          safe: true
+        });
+        return db.open(function(err, data) {
+          var clientC, clientM, mongoCollection, serverC, serverM, x;
+          if (err) {
+            test.fail(err);
+          }
+          s.addProtocol(new query.server({
+            verbose: true
+          }));
+          s.addProtocol(new channel.server({
+            verbose: true
+          }));
+          s.addProtocol(new collectionProtocol.server({
+            verbose: true
+          }));
+          c.addProtocol(new query.client({
+            verbose: true
+          }));
+          c.addProtocol(new channel.client({
+            verbose: true
+          }));
+          c.addProtocol(new collectionProtocol.client({
+            verbose: true,
+            collectionClass: collectionsC.ModelMixin.extend4000(collectionsC.ReferenceMixin, collectionProtocol.clientCollection)
+          }));
+          mongoCollection = new collectionsS.MongoCollection({
+            collection: 'bla',
+            db: db
+          });
+          serverM = mongoCollection.defineModel('bla', {
+            permissions: collectionsS.definePermissions(function(write, execute, read) {
+              return write('test', new collectionsS.Permission());
+            })
+          });
+          serverC = s.collection('bla', {
+            collection: mongoCollection,
+            broadcast: '*',
+            permissions: function(perm) {
+              return perm.create(true);
+            }
+          });
+          clientC = c.collection('bla');
+          clientM = clientC.defineModel('bla', {});
+          x = new clientM({
+            test: 'data'
+          });
+          return x.flush(function(err, data) {
+            if (err) {
+              test.error(err);
+            }
+            return x.remove(function() {
+              return test.done();
+            });
+          });
+        });
+      });
+    });
+  };
+
   Test = (function() {
     function Test() {}
 
     Test.prototype.done = function() {
-      return console.log('test done');
+      console.log('test done');
+      return process.exit(0);
+    };
+
+    Test.prototype.error = function(err) {
+      console.log('ERROR', err);
+      return process.exit(0);
     };
 
     Test.prototype.equal = function(x, y) {
@@ -325,6 +403,6 @@
 
   })();
 
-  exports.CollectionProtocol(new Test());
+  exports.CollectionProtocolPermissions(new Test());
 
 }).call(this);

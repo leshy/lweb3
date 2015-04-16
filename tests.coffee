@@ -159,8 +159,7 @@ exports.CollectionProtocol = (test) ->
                 serverM = mongoCollection.defineModel 'bla',
                     permissions: collectionsS.definePermissions (write, execute, read) ->
                         write 'test', new collectionsS.Permission()
-                        
-                
+                                       
                 serverC = s.collection 'bla',
                     collection: mongoCollection
                     broadcast: '*'
@@ -174,13 +173,63 @@ exports.CollectionProtocol = (test) ->
                     if err then test.error err
                     x.remove ->
                         test.done()
+
+
+exports.CollectionProtocolPermissions = (test) ->
+    mongodb = require 'mongodb'
+    channel = require('./protocols/channel')
+    query = require('./protocols/query')
+    collectionProtocol = require './protocols/collection'
+    collectionsS = require 'collections/serverside'
+    collectionsC = require 'collections'
+    gimmeEnv (lwebs,s,c,done) ->
+        helpers.wait 100, -> 
+            db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
+            db.open (err,data) ->
+                if err then test.fail err
+                s.addProtocol new query.server verbose: true
+                s.addProtocol new channel.server verbose: true
+                s.addProtocol new collectionProtocol.server verbose: true
                 
+                c.addProtocol new query.client verbose: true
+                c.addProtocol new channel.client verbose: true
+                c.addProtocol new collectionProtocol.client
+                    verbose: true
+                    collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
+
+                
+                mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
+                serverM = mongoCollection.defineModel 'bla',
+                    permissions: collectionsS.definePermissions (write, execute, read) ->
+                        write 'test', new collectionsS.Permission()
+                                       
+                serverC = s.collection 'bla',
+                    collection: mongoCollection
+                    broadcast: '*'
+                    permissions: (perm) ->
+                        perm.create true
+
+                
+                clientC = c.collection 'bla'
+                clientM = clientC.defineModel 'bla', {}
+                
+                x = new clientM({test:'data' })
+                
+                x.flush (err,data) ->
+                    if err then test.error err
+                    x.remove ->
+                        test.done()
+                
+
 
 
 class Test
     done: ->
         console.log 'test done'
-#        process.exit(0)
+        process.exit(0)
+    error: (err) ->
+        console.log 'ERROR',err
+        process.exit(0)
     equal: (x,y) ->
         if x isnt y then throw "not equal"            
     deepEqual: -> true
@@ -189,4 +238,4 @@ class Test
 
 #exports.QueryProtocol new Test()
 #exports.queryServerServer new Test()
-exports.CollectionProtocol new Test()
+exports.CollectionProtocolPermissions new Test()
