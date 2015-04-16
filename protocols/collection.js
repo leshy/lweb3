@@ -50,9 +50,14 @@
       }
     },
     subscribeModel: function(id, callback) {
-      return this.parent.parent.channel(this.get('name') + ":" + id).join(function(msg) {
+      this.parent.parent.channel(this.get('name') + ":" + id).join(function(msg) {
         return callback(msg);
       });
+      return (function(_this) {
+        return function() {
+          return _this.parent.parent.channel(_this.get('name') + ":" + id).part();
+        };
+      })(this);
     },
     query: function(msg, callback) {
       msg.collection = this.get('name');
@@ -120,13 +125,15 @@
       this.set({
         name: name = c.get('name')
       });
-      if (broadcast = this.get('broadcast' === true || broadcast === '*')) {
+      broadcast = this.get('broadcast');
+      if (broadcast === true || broadcast === '*') {
         broadcast = {
           update: true,
           remove: true,
           create: true
         };
       }
+      console.log('hai', name, broadcast, this.get('broadcast'));
       if (broadcast) {
         if (broadcast.update) {
           this.c.on('update', (function(_this) {

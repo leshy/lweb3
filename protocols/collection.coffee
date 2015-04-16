@@ -28,6 +28,7 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000
 
     subscribeModel: (id,callback) ->
         @parent.parent.channel(@get('name') + ":" + id).join (msg) -> callback msg
+        return => @parent.parent.channel(@get('name') + ":" + id).part()
 
     query: (msg,callback) ->
         msg.collection = @get 'name'
@@ -71,8 +72,13 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         @permissions = {}
 
         @set name: name =  c.get('name')
-        if broadcast = @get 'broadcast' is true or broadcast is '*' then broadcast = update: true, remove: true, create: true
+        
+        broadcast = @get('broadcast')
+        if broadcast is true or broadcast is '*'
+            broadcast = update: true, remove: true, create: true
 
+
+        console.log 'hai', name,broadcast, @get('broadcast')
         if broadcast
             if broadcast.update            
                 @c.on 'update', (data) =>
@@ -86,20 +92,17 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                 @c.on 'create', (data) =>
                     @parent.parent.channel(name).broadcast action: 'create', create: data
 
-
-
         if not permDef = @get('permissions') then console.warn "WARNING: no permissions for collection #{ name }, passing everything"
         else            
             msgTypes = [ 'find', 'findOne', 'create', 'remove', 'update', 'call' ]
             
-            permDef(
-                helpers.dictMap msgTypes, (val,msgType) =>
+            permDef helpers.dictMap msgTypes, (val,msgType) =>
                     @permissions[msgType] = []
                     
                     return (matchMsg, matchRealm) =>
                         permission = { matchMsg: v(matchMsg) }
                         if matchRealm then permission.matchRealm = v(matchRealm)
-                        @permissions[msgType].push permission)
+                        @permissions[msgType].push permission
 
         callbackToRes = (res) -> (err,data) ->
             if err?.name then err = err.name
@@ -133,7 +136,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                             res.write err: err, data: data
 
                 if msg.find
-                    return @applyPermission @permissions.find, msg, realm, (err,msg) ->
+                    return @applyPermission @permissions.find, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
                         bucket = new helpers.parallelBucket()
                         endCb = bucket.cb()
@@ -143,6 +146,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                                 if not err and not _.isEmpty(data) then res.write data
                                 if model.gCollect then model.gCollect()
                                 bucketCallback()), ((err,data) -> endCb())
+                                
                         bucket.done (err,data) -> res.end()
 
                 #@core?.event msg.payload, msg.id, realm            
