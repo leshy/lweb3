@@ -354,6 +354,7 @@
               return perm.create(true);
             }
           });
+          console.log(serverC.permissions);
           clientC = c.collection('bla');
           clientM = clientC.defineModel('bla', {});
           x = new clientM({
@@ -364,10 +365,11 @@
               test.error(err);
             }
             return x.remove(function(err, data) {
+              console.log(err, data);
               if (!err) {
-                test.eror('remove passed');
+                test.error('remove passed');
               }
-              serverC.permissions.push({
+              serverC.permissions.remove.push({
                 matchMsg: v(true)
               });
               return x.remove(function(err, data) {

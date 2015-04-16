@@ -116,6 +116,7 @@
     initialize: function() {
       var broadcast, c, callbackToRes, msgTypes, name, permDef;
       c = this.c = this.get('collection');
+      this.permissions = {};
       this.set({
         name: name = c.get('name')
       });
@@ -167,46 +168,23 @@
       if (!(permDef = this.get('permissions'))) {
         console.warn("WARNING: no permissions for collection " + name + ", passing everything");
       } else {
-        this.permissions = [];
         msgTypes = ['find', 'findOne', 'create', 'remove', 'update', 'call'];
         permDef(helpers.dictMap(msgTypes, (function(_this) {
           return function(val, msgType) {
+            _this.permissions[msgType] = [];
             return function(matchMsg, matchRealm) {
-              var matchMsgVal, permission;
-              matchMsgVal = {};
-              matchMsgVal[msgType] = matchMsg;
+              var permission;
               permission = {
-                matchMsg: v(matchMsgVal)
+                matchMsg: v(matchMsg)
               };
               if (matchRealm) {
                 permission.matchRealm = v(matchRealm);
               }
-              return _this.permissions.push(permission);
+              return _this.permissions[msgType].push(permission);
             };
           };
         })(this)));
       }
-      this.when('parent', (function(_this) {
-        return function(parent) {
-          return parent.parent.onQuery({
-            collection: name
-          }, function(msg, res, realm) {
-            if (realm == null) {
-              realm = {};
-            }
-            return _this.applyPermissions(msg, realm, function(err, msg) {
-              var ref;
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              _this.event(msg, res, realm);
-              return (ref = _this.core) != null ? ref.event(msg.payload, msg.id, realm) : void 0;
-            });
-          });
-        };
-      })(this));
       callbackToRes = function(res) {
         return function(err, data) {
           if (err != null ? err.name : void 0) {
@@ -218,85 +196,112 @@
           });
         };
       };
-      this.subscribe({
-        create: Object
-      }, function(msg, res, realm) {
-        return c.createModel(msg.create, realm, callbackToRes(res));
-      });
-      this.subscribe({
-        remove: Object
-      }, function(msg, res, realm) {
-        return c.removeModel(msg.remove, callbackToRes(res));
-      });
-      this.subscribe({
-        update: Object,
-        data: Object
-      }, function(msg, res, realm) {
-        return c.updateModel(msg.update, msg.data, realm, callbackToRes(res));
-      });
-      this.subscribe({
-        findOne: Object
-      }, function(msg, res, realm) {
-        return c.findModel(msg.findOne, function(err, model) {
-          if (err) {
-            return callbackToRes(res)(err);
-          }
-          model.render(realm, callbackToRes(res));
-          if (model.gCollect) {
-            return model.gCollect();
-          }
-        });
-      });
-      this.subscribe({
-        call: String,
-        pattern: Object,
-        args: v()["default"]([]).Array()
-      }, function(msg, res, realm) {
-        return c.fcall(msg.call, msg.args, msg.pattern, realm, callbackToRes(res), function(err, data) {
-          if (err != null ? err.name : void 0) {
-            err = err.name;
-          }
-          return res.write({
-            err: err,
-            data: data
-          });
-        });
-      });
-      return this.subscribe({
-        find: Object
-      }, (function(_this) {
-        return function(msg, res, realm) {
-          var bucket, endCb;
-          bucket = new helpers.parallelBucket();
-          endCb = bucket.cb();
-          c.findModels(msg.find, msg.limits || {}, (function(err, model) {
-            var bucketCallback;
-            bucketCallback = bucket.cb();
-            return model.render(realm, function(err, data) {
-              if (!err && !_.isEmpty(data)) {
-                res.write(data);
-              }
-              if (model.gCollect) {
-                model.gCollect();
-              }
-              return bucketCallback();
-            });
-          }), (function(err, data) {
-            return endCb();
-          }));
-          return bucket.done(function(err, data) {
-            return res.end();
+      return this.when('parent', (function(_this) {
+        return function(parent) {
+          return parent.parent.onQuery({
+            collection: name
+          }, function(msg, res, realm) {
+            if (realm == null) {
+              realm = {};
+            }
+            if (msg.create) {
+              return _this.applyPermission(_this.permissions.create, msg, realm, function(err, msg) {
+                if (err) {
+                  return res.end({
+                    err: 'access denied'
+                  });
+                }
+                return c.createModel(msg.create, realm, callbackToRes(res));
+              });
+            }
+            if (msg.remove) {
+              return _this.applyPermission(_this.permissions.remove, msg, realm, function(err, msg) {
+                console.log("GOT", err, msg);
+                if (err) {
+                  return res.end({
+                    err: 'access denied'
+                  });
+                }
+                return c.removeModel(msg.remove, callbackToRes(res));
+              });
+            }
+            if (msg.findOne) {
+              return _this.applyPermission(_this.permissions.findOne, msg, realm, function(err, msg) {
+                if (err) {
+                  return res.end({
+                    err: 'access denied'
+                  });
+                }
+                return c.findModel(msg.findOne, function(err, model) {
+                  if (err) {
+                    return callbackToRes(res)(err);
+                  }
+                  model.render(realm, callbackToRes(res));
+                  if (model.gCollect) {
+                    return model.gCollect();
+                  }
+                });
+              });
+            }
+            if (msg.call) {
+              return _this.applyPermission(_this.permissions.call, msg, realm, function(err, msg) {
+                if (err) {
+                  return res.end({
+                    err: 'access denied'
+                  });
+                }
+                return c.fcall(msg.call, msg.args, msg.pattern, realm, callbackToRes(res), function(err, data) {
+                  if (err != null ? err.name : void 0) {
+                    err = err.name;
+                  }
+                  return res.write({
+                    err: err,
+                    data: data
+                  });
+                });
+              });
+            }
+            if (msg.find) {
+              return _this.applyPermission(_this.permissions.find, msg, realm, function(err, msg) {
+                var bucket, endCb;
+                if (err) {
+                  return res.end({
+                    err: 'access denied'
+                  });
+                }
+                bucket = new helpers.parallelBucket();
+                endCb = bucket.cb();
+                c.findModels(msg.find, msg.limits || {}, (function(err, model) {
+                  var bucketCallback;
+                  bucketCallback = bucket.cb();
+                  return model.render(realm, function(err, data) {
+                    if (!err && !_.isEmpty(data)) {
+                      res.write(data);
+                    }
+                    if (model.gCollect) {
+                      model.gCollect();
+                    }
+                    return bucketCallback();
+                  });
+                }), (function(err, data) {
+                  return endCb();
+                }));
+                return bucket.done(function(err, data) {
+                  return res.end();
+                });
+              });
+            }
           });
         };
       })(this));
     },
-    applyPermissions: function(msg, realm, callback) {
-      if (!this.permissions) {
+    applyPermission: function(permissions, msg, realm, callback) {
+      if (!permissions) {
         return _.defer(function() {
           return callback(void 0, msg);
         });
       } else {
-        return async.series(_.map(this.permissions, function(permission) {
+        return async.series(_.map(permissions, function(permission) {
           return function(callback) {
             return permission.matchMsg.feed(msg, function(err, msg) {
               if (err) {

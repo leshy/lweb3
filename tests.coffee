@@ -175,6 +175,7 @@ exports.CollectionProtocol = (test) ->
                         test.done()
 
 
+
 exports.CollectionProtocolPermissions = (test) ->
     mongodb = require 'mongodb'
     channel = require('./protocols/channel')
@@ -208,7 +209,8 @@ exports.CollectionProtocolPermissions = (test) ->
                     broadcast: '*'
                     permissions: (perm) ->
                         perm.create true
-
+                        
+                console.log serverC.permissions
                 
                 clientC = c.collection 'bla'
                 clientM = clientC.defineModel 'bla', {}
@@ -218,15 +220,12 @@ exports.CollectionProtocolPermissions = (test) ->
                 x.flush (err,data) ->
                     if err then test.error err
                     x.remove (err,data) ->
-                        if not err then test.eror 'remove passed'
-
-                        serverC.permissions.push { matchMsg: v(true) }
+                        console.log err,data
+                        if not err then test.error 'remove passed'
+                        serverC.permissions.remove.push { matchMsg: v(true) }
                         x.remove (err,data) ->
                             if err then test.error 'remove didnt pass'
                             test.done()
-                
-
-
 
 class Test
     done: ->

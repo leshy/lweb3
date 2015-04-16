@@ -68,6 +68,8 @@ client = exports.client = collectionProtocol.extend4000
 serverCollection = exports.serverCollection = collectionInterface.extend4000
     initialize: ->
         c = @c = @get 'collection'
+        @permissions = {}
+        
         @set name: name =  c.get('name')
 
         if broadcast = @get 'broadcast' is true or broadcast is '*' then broadcast = update: true, remove: true, create: true
@@ -86,70 +88,71 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     @parent.parent.channel(name).broadcast action: 'create', create: data
 
 
+
         if not permDef = @get('permissions') then console.warn "WARNING: no permissions for collection #{ name }, passing everything"
-        else
-            @permissions = []
-            
+        else            
             msgTypes = [ 'find', 'findOne', 'create', 'remove', 'update', 'call' ]
             
             permDef(
                 helpers.dictMap msgTypes, (val,msgType) =>
-                    (matchMsg, matchRealm) =>
-                        matchMsgVal = {}
-                        matchMsgVal[msgType] = matchMsg
-                        permission = { matchMsg: v(matchMsgVal) }
+                    @permissions[msgType] = []
+                    
+                    return (matchMsg, matchRealm) =>
+                        permission = { matchMsg: v(matchMsg) }
                         if matchRealm then permission.matchRealm = v(matchRealm)
-                        @permissions.push permission)
-            
-                        
-        @when 'parent', (parent) =>
-            parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
-                @applyPermissions msg, realm, (err, msg) =>
-                    if err then return res.end err: 'access denied'
-                    @event msg, res, realm
-                    @core?.event msg.payload, msg.id, realm            
-                       
+                        @permissions[msgType].push permission)
+
         callbackToRes = (res) -> (err,data) ->
             if err?.name then err = err.name
             res.end err: err, data: data
-
-        @subscribe { create: Object }, (msg, res, realm) ->
-            c.createModel msg.create, realm, callbackToRes(res)
-            
-        @subscribe { remove: Object }, (msg, res, realm) ->
-            c.removeModel msg.remove, callbackToRes(res)
-            
-        @subscribe { update: Object, data: Object }, (msg, res, realm) ->
-            c.updateModel msg.update, msg.data, realm, callbackToRes(res)
-            
-        @subscribe { findOne: Object }, (msg, res, realm) ->
-            c.findModel msg.findOne, (err,model) ->
-                if err then return callbackToRes(res)(err)
-                model.render realm, callbackToRes(res)
-                if model.gCollect then model.gCollect()
-            
-        @subscribe { call: String, pattern: Object, args: v().default([]).Array() }, (msg, res, realm) ->
-            c.fcall msg.call, msg.args, msg.pattern, realm, callbackToRes(res), (err,data) ->
-                if err?.name then err = err.name
-                res.write err: err, data: data
-                            
-        @subscribe { find: Object }, (msg, res, realm) =>
-            bucket = new helpers.parallelBucket()
-            endCb = bucket.cb()
+        
+        @when 'parent', (parent) =>
+            parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
+                if msg.create
+                    return @applyPermission @permissions.create, msg, realm, (err,msg) ->
+                        if err then return res.end err: 'access denied'
+                        c.createModel msg.create, realm, callbackToRes(res)
                         
-            c.findModels msg.find, msg.limits or {}, ((err,model) ->
-                bucketCallback = bucket.cb()
-                model.render realm, (err,data) ->
-                    if not err and not _.isEmpty(data) then res.write data
-                    if model.gCollect then model.gCollect()
-                    bucketCallback()), ((err,data) -> endCb())
-                    
-            bucket.done (err,data) -> res.end()
-            
-    applyPermissions: (msg, realm, callback) ->
-        if not @permissions then return _.defer -> callback undefined, msg
+                if msg.remove
+                    return @applyPermission @permissions.remove, msg, realm, (err,msg) ->
+                        console.log "GOT",err,msg
+                        if err then return res.end err: 'access denied'
+                        c.removeModel msg.remove, callbackToRes(res)
+                        
+                if msg.findOne
+                    return @applyPermission @permissions.findOne, msg, realm, (err,msg) ->
+                        if err then return res.end err: 'access denied'
+                        c.findModel msg.findOne, (err,model) ->
+                            if err then return callbackToRes(res)(err)
+                            model.render realm, callbackToRes(res)
+                            if model.gCollect then model.gCollect()
+
+                if msg.call
+                    return @applyPermission @permissions.call, msg, realm, (err,msg) ->
+                        if err then return res.end err: 'access denied'
+                        c.fcall msg.call, msg.args, msg.pattern, realm, callbackToRes(res), (err,data) ->
+                            if err?.name then err = err.name
+                            res.write err: err, data: data
+
+                if msg.find
+                    return @applyPermission @permissions.find, msg, realm, (err,msg) ->
+                        if err then return res.end err: 'access denied'
+                        bucket = new helpers.parallelBucket()
+                        endCb = bucket.cb()
+                        c.findModels msg.find, msg.limits or {}, ((err,model) ->
+                            bucketCallback = bucket.cb()
+                            model.render realm, (err,data) ->
+                                if not err and not _.isEmpty(data) then res.write data
+                                if model.gCollect then model.gCollect()
+                                bucketCallback()), ((err,data) -> endCb())
+                        bucket.done (err,data) -> res.end()
+
+                #@core?.event msg.payload, msg.id, realm            
+        
+    applyPermission: (permissions, msg, realm, callback) ->
+        if not permissions then return _.defer -> callback undefined, msg
         else
-            async.series _.map(@permissions, (permission) ->
+            async.series _.map(permissions, (permission) ->
                 (callback) ->
                     permission.matchMsg.feed msg, (err,msg) ->
                         if err then return callback null, err
@@ -161,9 +164,6 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     if data then callback null, data
                     else callback true, data
 
-                
-
-                        
 server = exports.server = collectionProtocol.extend4000
     defaults:
         name: 'collectionServer'
