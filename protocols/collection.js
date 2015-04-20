@@ -64,7 +64,6 @@
       return this.parent.parent.query(msg, callback);
     },
     create: function(data, callback) {
-      this.log('create', data);
       delete data._t;
       return this.query({
         create: data
@@ -207,6 +206,7 @@
           return parent.parent.onQuery({
             collection: name
           }, function(msg, res, realm) {
+            var ref;
             if (realm == null) {
               realm = {};
             }
@@ -227,6 +227,7 @@
                     err: 'access denied'
                   });
                 }
+                _this.log('remove', msg.remove);
                 return c.removeModel(msg.remove, realm, callbackToRes(res));
               });
             }
@@ -237,6 +238,7 @@
                     err: 'access denied'
                   });
                 }
+                _this.log('findOne', msg.findOne);
                 return c.findModel(msg.findOne, function(err, model) {
                   if (err) {
                     return callbackToRes(res)(err);
@@ -248,22 +250,34 @@
                 });
               });
             }
-            if (msg.call) {
+            if (msg.call && ((ref = msg.pattern) != null ? ref.constructor : void 0) === Object) {
               return _this.applyPermission(_this.permissions.call, msg, realm, function(err, msg) {
                 if (err) {
                   return res.end({
                     err: 'access denied'
                   });
                 }
-                return c.fcall(msg.call, msg.args, msg.pattern, realm, callbackToRes(res), function(err, data) {
+                _this.log('call', msg.pattern, msg.call, msg.args);
+                return c.fcall(msg.call, msg.args || [], msg.pattern, realm, callbackToRes(res), function(err, data) {
                   if (err != null ? err.name : void 0) {
                     err = err.name;
                   }
-                  return res.write({
+                  return res.end({
                     err: err,
                     data: data
                   });
                 });
+              });
+            }
+            if (msg.update && msg.data) {
+              return _this.applyPermission(_this.permissions.update, msg, realm, function(err, msg) {
+                if (err) {
+                  return res.end({
+                    err: 'access denied'
+                  });
+                }
+                _this.log('update', msg.update, msg.data);
+                return c.updateModel(msg.update, msg.data, realm, callbackToRes(res));
               });
             }
             if (msg.find) {
@@ -276,6 +290,7 @@
                 }
                 bucket = new helpers.parallelBucket();
                 endCb = bucket.cb();
+                _this.log('find', msg.find, msg.limits);
                 c.findModels(msg.find, msg.limits || {}, (function(err, model) {
                   var bucketCallback;
                   bucketCallback = bucket.cb();
@@ -296,6 +311,9 @@
                 });
               });
             }
+            return res.end({
+              err: 'wat'
+            });
           });
         };
       })(this));

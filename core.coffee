@@ -53,7 +53,6 @@ protocolHost = exports.protocolHost = core.extend4000
 
 channel = exports.channel = protocolHost.extend4000
     send: (msg) -> throw 'not implemented'
-    
                         
 protocol = exports.protocol = core.extend4000
     requires: []

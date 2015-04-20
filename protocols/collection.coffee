@@ -24,7 +24,8 @@ queryToCallback = (callback) ->
         
 clientCollection = exports.clientCollection = collectionInterface.extend4000
     initialize: ->
-        if @get('autosubscribe') isnt false then @parent.parent.channel(@get('name')).join (msg) => @event msg
+        if @get('autosubscribe') isnt false
+            @parent.parent.channel(@get('name')).join (msg) => @event msg
 
     subscribeModel: (id,callback) ->
         @parent.parent.channel(@get('name') + ":" + id).join (msg) -> callback msg
@@ -35,7 +36,6 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000
         @parent.parent.query msg, callback
 
     create: (data,callback) ->
-        @log 'create',data
         delete data._t
         @query { create: data }, queryToCallback callback
 
@@ -86,7 +86,9 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
             if broadcast.remove
                 @c.on 'remove', (data) => # should get POST REMOVE data from event, so that it can transmit ids
-                    if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'remove'
+                    if id = data.id
+                        #@parent.parent.channel(name).broadcast action: 'remove', remove: id
+                        @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'remove'
 
             if broadcast.create
                 @c.on 'create', (data) =>
@@ -116,38 +118,49 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                         c.createModel msg.create, realm, callbackToRes(res)
                         
                 if msg.remove
-                    return @applyPermission @permissions.remove, msg, realm, (err,msg) ->
+                    return @applyPermission @permissions.remove, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
+                        @log 'remove', msg.remove
                         c.removeModel msg.remove, realm, callbackToRes(res)
                         
                 if msg.findOne
-                    return @applyPermission @permissions.findOne, msg, realm, (err,msg) ->
+                    return @applyPermission @permissions.findOne, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
+                        @log 'findOne', msg.findOne
                         c.findModel msg.findOne, (err,model) ->
                             if err then return callbackToRes(res)(err)
                             model.render realm, callbackToRes(res)
                             if model.gCollect then model.gCollect()
 
-                if msg.call
-                    return @applyPermission @permissions.call, msg, realm, (err,msg) ->
+                if msg.call and msg.pattern?.constructor is Object
+                    return @applyPermission @permissions.call, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
-                        c.fcall msg.call, msg.args, msg.pattern, realm, callbackToRes(res), (err,data) ->
+                        @log 'call', msg.pattern, msg.call, msg.args
+                        c.fcall msg.call, msg.args or [], msg.pattern, realm, callbackToRes(res), (err,data) ->
                             if err?.name then err = err.name
-                            res.write err: err, data: data
+                            res.end err: err, data: data
+
+                if msg.update and msg.data
+                    return @applyPermission @permissions.update, msg, realm, (err,msg) =>
+                        if err then return res.end err: 'access denied'
+                        @log 'update', msg.update, msg.data
+                        c.updateModel msg.update, msg.data, realm, callbackToRes(res)
 
                 if msg.find
                     return @applyPermission @permissions.find, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
                         bucket = new helpers.parallelBucket()
                         endCb = bucket.cb()
+                        @log 'find', msg.find, msg.limits
                         c.findModels msg.find, msg.limits or {}, ((err,model) ->
                             bucketCallback = bucket.cb()
                             model.render realm, (err,data) ->
                                 if not err and not _.isEmpty(data) then res.write data
                                 if model.gCollect then model.gCollect()
                                 bucketCallback()), ((err,data) -> endCb())
-                                
                         bucket.done (err,data) -> res.end()
+
+                res.end { err: 'wat' }
 
                 #@core?.event msg.payload, msg.id, realm            
         
