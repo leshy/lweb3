@@ -9,7 +9,7 @@ validator = require('validator2-extras'); v = validator.v
 core = require '../core'
 channel = require './channel'
 query = require './query'
-
+colors = require 'colors'
 collectionInterface = core.core.extend4000 {}
 
 collectionProtocol = core.protocol.extend4000 core.motherShip('collection'),
@@ -108,7 +108,8 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
         callbackToRes = (res) -> (err,data) ->
             if err?.name then err = err.name
-            res.end err: err, data: data
+            if err then res.end err: err
+            else res.end data: data
         
         @when 'parent', (parent) =>
             parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
