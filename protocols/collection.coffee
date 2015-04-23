@@ -16,12 +16,12 @@ collectionProtocol = core.protocol.extend4000 core.motherShip('collection'),
     functions: ->
         collection: _.bind @collection, @
         collections: @collections
-        
+
 queryToCallback = (callback) ->
     (msg,end) ->
         #if not end then throw "this query is supposed to be translated to callback but I got multiple responses"
         callback msg.err, msg.data
-        
+
 clientCollection = exports.clientCollection = collectionInterface.extend4000
     initialize: ->
         if @get('autosubscribe') isnt false
@@ -39,7 +39,7 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000
         delete data._t
         @query { create: data }, queryToCallback callback
 
-    remove: (pattern,callback) -> 
+    remove: (pattern,callback) ->
         @query { remove: pattern }, queryToCallback callback
 
     findOne: (pattern,callback) ->
@@ -54,17 +54,17 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000
     find: (pattern,limits,callback,callbackDone) ->
         query = { find: pattern }
         if limits then query.limits = limits
-            
+
         @query query, (msg,end) ->
             if end then return helpers.cbc callbackDone, null, end
             callback null, msg
-            
+
 client = exports.client = collectionProtocol.extend4000
     defaults:
         name: 'collectionClient'
         collectionClass: clientCollection
     requires: [ channel.client ]
-    
+
 
 serverCollection = exports.serverCollection = collectionInterface.extend4000
     initialize: ->
@@ -72,7 +72,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         @permissions = {}
 
         @set name: name =  c.get('name')
-        
+
         broadcast = @get('broadcast')
         if broadcast is true or broadcast is '*'
             broadcast = update: true, remove: true, create: true
@@ -80,7 +80,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
         console.log 'hai', name,broadcast, @get('broadcast')
         if broadcast
-            if broadcast.update            
+            if broadcast.update
                 @c.on 'update', (data) =>
                     if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'update', update: data
 
@@ -95,12 +95,12 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                     @parent.parent.channel(name).broadcast action: 'create', create: data
 
         if not permDef = @get('permissions') then console.warn "WARNING: no permissions for collection #{ name }, passing everything"
-        else            
+        else
             msgTypes = [ 'find', 'findOne', 'create', 'remove', 'update', 'call' ]
-            
+
             permDef helpers.dictMap msgTypes, (val,msgType) =>
                     @permissions[msgType] = []
-                    
+
                     return (matchMsg, matchRealm) =>
                         permission = { matchMsg: v(matchMsg) }
                         if matchRealm then permission.matchRealm = v(matchRealm)
@@ -110,20 +110,20 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
             if err?.name then err = err.name
             if err then res.end err: err
             else res.end data: data
-        
+
         @when 'parent', (parent) =>
             parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
                 if msg.create
                     return @applyPermission @permissions.create, msg, realm, (err,msg) ->
                         if err then return res.end err: 'access denied'
                         c.createModel msg.create, realm, callbackToRes(res)
-                        
+
                 if msg.remove
                     return @applyPermission @permissions.remove, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
                         @log 'remove', msg.remove
                         c.removeModel msg.remove, realm, callbackToRes(res)
-                        
+
                 if msg.findOne
                     return @applyPermission @permissions.findOne, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
@@ -163,8 +163,8 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
 
                 res.end { err: 'wat' }
 
-                #@core?.event msg.payload, msg.id, realm            
-        
+                #@core?.event msg.payload, msg.id, realm
+
     applyPermission: (permissions = [], msg, realm, callback) ->
         async.series _.map(permissions, (permission) ->
             (callback) ->
@@ -182,7 +182,7 @@ server = exports.server = collectionProtocol.extend4000
     defaults:
         name: 'collectionServer'
         collectionClass: serverCollection
-        
+
     requires: [ channel.server ]
 
 
@@ -190,13 +190,13 @@ serverServer = exports.serverServer = collectionProtocol.extend4000
     defaults:
         name: 'collectionServerServer'
         collectionClass: serverCollection
-        
+
     requires: [ query.serverServer ]
 
     initialize: ->
         @when 'parent', (parent) =>
             parent.on 'connect', (client) =>
                 client.addProtocol new server verbose: @verbose, core: @
-                
+
             _.map parent.clients, (client,id) =>
                 client.addProtocol new server verbose: @verbose, core: @

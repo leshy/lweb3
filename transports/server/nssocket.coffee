@@ -17,11 +17,11 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
 
     defaults:
         name: 'nssocketServer'
-                                
+
     initialize: ->
         port = @get 'port'
         idcounter = 0
-        
+
         channelClass = exports.nssocketChannel.extend4000 (@get('channelClass') or @channelClass or {})
         @nssocket = nssocket.createServer (clientSocket) =>
             name = ++idcounter
@@ -41,7 +41,7 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
                 @trigger 'disconnect', channel
 
         @nssocket.listen @get 'port'
-            
+
     end: ->
         @nssocket.disconnect()
         core.core::end.call @
