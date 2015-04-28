@@ -11,10 +11,10 @@ core = require '../core'
 engineIoChannel = exports.engineIoChannel = core.channel.extend4000
     defaults:
         name: 'engineIo'
-        
+
     initialize: ->
         realm = { client: @ }
-        
+
         @when 'engineIo', (@engineIo) =>
             if id = @engineIo.id then @set name: id
             @engineIo.on 'message', (msg) =>
@@ -22,18 +22,16 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
                 @log "<", msg
                 @event msg, realm
                 @trigger 'msg', msg
-                
+
             @engineIo.on 'close', =>
                 @trigger 'disconnect'
                 @log "Lost Connection"
                 @end()
-    
+
             @when 'parent', (parent) =>
                 parent.on 'end', => @end()
                 @on 'msg', (msg) => parent.event msg, realm
-        
+
     send: (msg) ->
         @log ">", msg
         @engineIo.send JSON.stringify msg
-        
-

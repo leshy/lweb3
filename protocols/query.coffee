@@ -21,20 +21,20 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
 
     functions: ->
         query: _.bind @send, @
-                        
+
     initialize: ->
         @when 'parent', (parent) =>
             parent.subscribe { type: 'reply', id: String }, (msg) =>
                 if msg.end then @log 'query completed', msg.id, msg.payload
                 else @log 'got query reply', msg.id, msg.payload
-                
+
                 @event msg
             parent.on 'end', => @end()
-            
+
     endQuery: (id) ->
         @log 'canceling query', id
         @parent.send { type: 'queryCancel', id: id }
-    
+
     send: (msg, timeout, callback) ->
         if timeout?.constructor is Function
             callback = timeout
@@ -42,11 +42,11 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
 
         @parent.send { type: 'query', id: id = helpers.uuid(10), payload: msg }
         @log 'querying', id, msg
-        
+
         unsubscribe = @subscribe { type: 'reply', id: id }, (msg) =>
             if msg.end then unsubscribe()
             helpers.cbc callback, msg.payload, msg.end
-            
+
         #setTimeout unsubscribe, timeout
         return new query parent: @, id: id, unsubscribe: unsubscribe
 
@@ -57,19 +57,19 @@ reply = core.core.extend4000
             @log 'got query cancel request'
             @cancel()
         @parent.on 'end', => @cancel()
-        
+
     write: (msg) ->
 #        if @ended then throw "this reply has ended"
         if @ended then return false
         @parent.send msg, @id, false
         return true
-        
+
     end: (msg) ->
         if not @ended then @ended = true else console.error "this reply has ended"; return
         @unsubscribe()
         @parent.send msg, @id, true
         @trigger 'end'
-        
+
     cancel: ->
         @ended = true
         @unsubscribe()
@@ -80,7 +80,7 @@ reply = core.core.extend4000
 serverServer = exports.serverServer = core.protocol.extend4000
     defaults:
         name: 'queryServerServer'
-        
+
     functions: ->
         onQuery: _.bind @subscribe, @
 
@@ -92,10 +92,10 @@ serverServer = exports.serverServer = core.protocol.extend4000
         @when 'parent', (parent) =>
             parent.on 'connect', (client) =>
                 client.addProtocol new server verbose: @verbose, core: @
-                
+
             _.map parent.clients, (client,id) =>
                 client.addProtocol new server verbose: @verbose, core: @
-                                                           
+
     channel: (channel) ->
         channel.addProtocol new server verbose: @get 'verbose'
 
@@ -103,19 +103,19 @@ serverServer = exports.serverServer = core.protocol.extend4000
 server = exports.server = core.protocol.extend4000
     defaults:
         name: 'queryServer'
-    
+
     functions: ->
         onQuery: _.bind @subscribe, @
-                
+
     initialize: ->
         @when 'core', (core) => @core = core
-            
+
         @when 'parent', (parent) =>
             parent.subscribe { type: 'query', payload: true }, (msg, realm) =>
                 @log 'got query',msg.id,msg.payload
                 @event msg.payload, msg.id, realm
                 @core?.event msg.payload, msg.id, realm
-                
+
             parent.on 'end', => @end()
 
     send: (payload,id,end=false) ->
@@ -127,6 +127,3 @@ server = exports.server = core.protocol.extend4000
     subscribe: (pattern=true, callback) ->
         subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) =>
             callback payload, new reply(id: id, parent: @), realm
-
-
-

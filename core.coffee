@@ -13,16 +13,16 @@ core = exports.core = subscriptionMan.fancy.extend4000
         #console.log "initializing",@name(), @verbose
         @when 'parent', (@parent) =>
             @verbose = @get('verbose') or @parent?.verbose or false
-            
+
     name: ->
         if @parent then @parent.name() + "-" + @get('name')
         else @get('name') or 'noname'
-        
+
     end: ->
         if @ended then return else @ended = true
         @log 'ending'
         @trigger 'end'
-            
+
     log: (args...) ->
         @trigger 'log', args
         if @verbose then console.log.apply console, [].concat( '::', new Date().getTime() - startTime, @name(), args)
@@ -31,36 +31,36 @@ core = exports.core = subscriptionMan.fancy.extend4000
 protocolHost = exports.protocolHost = core.extend4000
     initialize: ->
         @protocols = {}
-        
+
     hasProtocol: (protocol) ->
         if typeof protocol is 'function' then return Boolean @[protocol::defaults.name]
         if typeof protocol is 'object' then return Boolean @[protocol.name()]
         throw "what is this?"
-        
+
     addProtocol: (protocol) ->
         if not name = protocol.name() then throw "what is this?"
 
         if @hasProtocol protocol then return
             #this sometimes throws and I dong't care about it actually. commented
-            #throw "this protocol (#{protocol.name()}) is already active on channel"        
+            #throw "this protocol (#{protocol.name()}) is already active on channel"
         _.map protocol.requires, (dependancyProtocol) =>
             if not @hasProtocol dependancyProtocol then @addProtocol new dependancyProtocol()
-          
+
         @[name] = protocol
         protocol.set parent: @
-        
+
         if protocol.functions then _.extend @, protocol.functions()
 
 channel = exports.channel = protocolHost.extend4000
     send: (msg) -> throw 'not implemented'
-                        
+
 protocol = exports.protocol = core.extend4000
     requires: []
 
 # has events like 'connect' and 'disconnect', provides channel objects
 # has clients dictionary mapping ids to clients
 server = exports.server = protocolHost.extend4000
-    initialize: -> 
+    initialize: ->
         @clients = @children = {}
 
 # Just a common pattern,
@@ -70,7 +70,7 @@ server = exports.server = protocolHost.extend4000
 # used for channelserver.. for example channelServer.channel('bla') automatically instantiates channelClass with name bla
 #
 # also used for collection server or client
- 
+
 motherShip = exports.motherShip = (name) ->
     model = {}
 
@@ -86,6 +86,5 @@ motherShip = exports.motherShip = (name) ->
         instance.once 'end', => delete @[name + "s"][instanceName]
         @trigger 'new' + helpers.capitalize(name), instance
         return instance
-    
-    Backbone.Model.extend4000 model
 
+    Backbone.Model.extend4000 model

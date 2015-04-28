@@ -21,17 +21,17 @@ clientChannel = core.core.extend4000
         @log 'join'
         if not callback then callback = pattern; pattern = undefined
         if @joined then return else @joined = true
-            
+
         msg = joinChannel: name
         if pattern then msg.pattern = pattern
-            
+
         @query = @parent.parent.query msg, (msg) =>
             @log '#',msg
             callback msg
             @event msg
-            
+
         @
-                        
+
     part: ->
         @joined = false
         @query.end()
@@ -41,7 +41,7 @@ client = exports.client = channelInterface.extend4000
     defaults:
         name: 'channelClient'
         channelClass: clientChannel
-                        
+
     requires: [ query.client ]
 
     functions: ->
@@ -53,18 +53,18 @@ client = exports.client = channelInterface.extend4000
     join: (name,pattern,callback) ->
         if not callback then callback = pattern; pattern = true
         @channel(name).join pattern, callback
-    
+
 serverChannel = core.core.extend4000
     initialize: ->
         name = @get 'name'
         @clients = []
         @log 'initialized',name
-        
+
     join: (reply,pattern) ->
         @log 'client joined'
         #reply.write { joined: true }
-        
-        @subscribe pattern or true, (msg,next) -> 
+
+        @subscribe pattern or true, (msg,next) ->
             reply.write msg
             next()
 
@@ -76,12 +76,12 @@ serverChannel = core.core.extend4000
         _.map @clients, (client) -> client.end msg
         @clients = []
         core.core::end.call @
-                
+
 server = exports.server = channelInterface.extend4000
     defaults:
         name: 'channelServer'
         channelClass: serverChannel
-        
+
     requires: [ query.server ]
 
     functions: ->
@@ -103,7 +103,7 @@ serverServer = exports.serverServer = channelInterface.extend4000
     defaults:
         name: 'channelServerServer'
         channelClass: serverChannel
-        
+
     requires: [ query.serverServer ]
 
     functions: ->
@@ -114,6 +114,6 @@ serverServer = exports.serverServer = channelInterface.extend4000
         @when 'parent', (parent) =>
             parent.on 'connect', (client) =>
                 client.addProtocol new server verbose: @verbose, core: @
-                
+
             _.map parent.clients, (client,id) =>
                 client.addProtocol new server verbose: @verbose, core: @

@@ -114,7 +114,7 @@
         total += msg.reply;
         if (end) {
           test.equal(total, 19);
-          return test.done();
+          return done(test);
         }
       });
     });
@@ -153,9 +153,7 @@
         }, function(msg) {
           return test.ok(false, "didnt cancel");
         });
-        return helpers.wait(200, function() {
-          return test.done();
-        });
+        return done(test);
       });
     });
   };
@@ -231,74 +229,50 @@
     });
   };
 
-  exports.CollectionProtocol = function(test) {
-    var channel, collectionProtocol, collectionsC, collectionsS, mongodb, query;
-    mongodb = require('mongodb');
-    channel = require('./protocols/channel');
-    query = require('./protocols/query');
-    collectionProtocol = require('./protocols/collection');
-    collectionsS = require('collections/serverside');
-    collectionsC = require('collections');
-    return gimmeEnv(function(lwebs, s, c, done) {
-      return helpers.wait(100, function() {
-        var db;
-        db = new mongodb.Db('testdb', new mongodb.Server('localhost', 27017), {
-          safe: true
-        });
-        return db.open(function(err, data) {
-          var clientC, clientM, mongoCollection, serverC, serverM, x;
-          if (err) {
-            test.fail(err);
-          }
-          s.addProtocol(new query.server({
-            verbose: true
-          }));
-          s.addProtocol(new channel.server({
-            verbose: true
-          }));
-          s.addProtocol(new collectionProtocol.server({
-            verbose: true
-          }));
-          c.addProtocol(new query.client({
-            verbose: true
-          }));
-          c.addProtocol(new channel.client({
-            verbose: true
-          }));
-          c.addProtocol(new collectionProtocol.client({
-            verbose: true,
-            collectionClass: collectionsC.ModelMixin.extend4000(collectionsC.ReferenceMixin, collectionProtocol.clientCollection)
-          }));
-          mongoCollection = new collectionsS.MongoCollection({
-            collection: 'bla',
-            db: db
-          });
-          serverM = mongoCollection.defineModel('bla', {
-            permissions: collectionsS.definePermissions(function(write, execute, read) {
-              return write('test', new collectionsS.Permission());
-            })
-          });
-          serverC = s.collection('bla', {
-            collection: mongoCollection,
-            broadcast: '*'
-          });
-          clientC = c.collection('bla');
-          clientM = clientC.defineModel('bla', {});
-          x = new clientM({
-            test: 'data'
-          });
-          return x.flush(function(err, data) {
-            if (err) {
-              test.error(err);
-            }
-            return x.remove(function() {
-              return test.done();
-            });
-          });
-        });
-      });
-    });
-  };
+
+  /*
+  exports.CollectionProtocol = (test) ->
+      mongodb = require 'mongodb'
+      channel = require('./protocols/channel')
+      query = require('./protocols/query')
+      collectionProtocol = require './protocols/collection'
+      collectionsS = require 'collections/serverside'
+      collectionsC = require 'collections'
+      gimmeEnv (lwebs,s,c,done) ->
+          helpers.wait 100, ->
+              db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
+              db.open (err,data) ->
+                  if err then test.fail err
+                  s.addProtocol new query.server verbose: true
+                  s.addProtocol new channel.server verbose: true
+                  s.addProtocol new collectionProtocol.server verbose: true
+  
+                  c.addProtocol new query.client verbose: true
+                  c.addProtocol new channel.client verbose: true
+                  c.addProtocol new collectionProtocol.client
+                      verbose: true
+                      collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
+  
+  
+                  mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
+                  serverM = mongoCollection.defineModel 'bla',
+                      permissions: collectionsS.definePermissions (write, execute, read) ->
+                          write 'test', new collectionsS.Permission()
+  
+                  serverC = s.collection 'bla',
+                      collection: mongoCollection
+                      broadcast: '*'
+  
+                  clientC = c.collection 'bla'
+                  clientM = clientC.defineModel 'bla', {}
+  
+                  x = new clientM({test:'data' })
+  
+                  x.flush (err,data) ->
+                      if err then test.error err
+                      x.remove ->
+                          done test
+   */
 
   exports.CollectionProtocolPermissions = function(test) {
     var channel, collectionProtocol, collectionsC, collectionsS, mongodb, query;
@@ -376,7 +350,7 @@
                 if (err) {
                   test.error('remove didnt pass');
                 }
-                return test.done();
+                return done(test);
               });
             });
           });
@@ -415,7 +389,5 @@
     return Test;
 
   })();
-
-  exports.CollectionProtocolPermissions(new Test());
 
 }).call(this);
