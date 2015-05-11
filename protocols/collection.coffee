@@ -77,8 +77,8 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         if broadcast is true or broadcast is '*'
             broadcast = update: true, remove: true, create: true
 
+        #console.log 'hai', name, broadcast
 
-        console.log 'hai', name,broadcast, @get('broadcast')
         if broadcast
             if broadcast.update
                 @c.on 'update', (data) =>

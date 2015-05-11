@@ -31,7 +31,7 @@
     initialize: function() {
       this.http = this.get('http');
       this.engineIo = engineio.attach(this.http);
-      this.engineIo.on('connection', (function(_this) {
+      return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
           var channel, name;
           _this.log('connection received', name = engineIoClient.id, engineIoClient.request.socket.remoteAddress, engineIoClient.request.headers);
@@ -48,12 +48,6 @@
           _this.clients[name] = channel;
           _this.trigger('connect:' + name, channel);
           return _this.trigger('connect', channel);
-        };
-      })(this));
-      return this.engineIo.on('close', (function(_this) {
-        return function(engineIoClient) {
-          delete _this.clients[channel.get('name')];
-          return _this.trigger('disconnect', channel);
         };
       })(this));
     },

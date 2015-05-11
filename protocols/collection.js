@@ -134,7 +134,6 @@
           create: true
         };
       }
-      console.log('hai', name, broadcast, this.get('broadcast'));
       if (broadcast) {
         if (broadcast.update) {
           this.c.on('update', (function(_this) {
