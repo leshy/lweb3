@@ -51,9 +51,13 @@ protocolHost = exports.protocolHost = core.extend4000
 
         if protocol.functions then _.extend @, protocol.functions()
 
+
 channel = exports.channel = protocolHost.extend4000
-    getRealm: (data) -> data
+    initialize: ->
+        @realm = @getRealm()
+
     send: (msg) -> throw 'not implemented'
+    getRealm: () -> { client: @ }
 
 protocol = exports.protocol = core.extend4000
     requires: []

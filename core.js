@@ -93,11 +93,16 @@
   });
 
   channel = exports.channel = protocolHost.extend4000({
-    getRealm: function(data) {
-      return data;
+    initialize: function() {
+      return this.realm = this.getRealm();
     },
     send: function(msg) {
       throw 'not implemented';
+    },
+    getRealm: function() {
+      return {
+        client: this
+      };
     }
   });
 

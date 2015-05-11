@@ -12,12 +12,10 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
     name: 'nsSocket'
 
   initialize: ->
-    realm = { client: @ }
-
     @when 'nssocket', (@nssocket) =>
       @nssocket.data 'msg', (msg) =>
         @log "<", msg
-        @event msg, realm
+        @event msg, @realm
 
       @nssocket.on 'start', => @trigger 'connect'
       @nssocket.on 'close', => @trigger 'disconnect'
@@ -25,7 +23,7 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
     @when 'parent', (parent) =>
       #parent.on 'end', => @end()
       @nssocket.on 'msg', (msg) =>
-        parent.event msg, realm
+        parent.event msg, @realm
 
   send: (msg) ->
     @log ">", msg

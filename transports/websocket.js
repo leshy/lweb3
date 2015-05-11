@@ -23,10 +23,6 @@
       name: 'webSocket'
     },
     initialize: function() {
-      var realm;
-      realm = this.getRealm({
-        client: this
-      });
       return this.when('socketIo', (function(_this) {
         return function(socketIo) {
           var id;
@@ -38,7 +34,7 @@
           }
           _this.socketIo.on('msg', function(msg) {
             _this.log("<", msg);
-            _this.event(msg, realm);
+            _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
           });
           _this.socketIo.on('disconnect', function() {
@@ -51,7 +47,7 @@
               return _this.end();
             });
             return _this.on('msg', function(msg) {
-              return parent.event(msg, realm);
+              return parent.event(msg, _this.realm);
             });
           });
         };
