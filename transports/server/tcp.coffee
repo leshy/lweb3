@@ -17,24 +17,25 @@ tcpServer = exports.tcpServer = core.server.extend4000 validator.ValidatedModel,
 
     defaults:
         name: 'tcpServer'
-                                
+
+    defaultChannelClass: exports.tcpSocketChannel
+
     initialize: ->
         port = @get 'port'
         idcounter = 0
-        
-        channelClass = exports.tcpSocketChannel.extend4000 (@get('channelClass') or @channelClass or {})
+
         @server = net.createServer
             port: port,
             (socket) =>
                 name = ++idcounter
                 @log 'connection received', idcounter
 
-                channel = new channelClass parent: @, socket: socket, name: name
+                channel = new @channelClass parent: @, socket: socket, name: name
                 channel.on 'change:name', (model,newname) =>
                     delete @clients[name]
                     @clients[newname] = model
                     @trigger 'connect:' + newname, model
-                    
+
                 @clients[name] = channel
                 @trigger 'connect:' + name, channel
                 @trigger 'connect', channel
@@ -45,7 +46,7 @@ tcpServer = exports.tcpServer = core.server.extend4000 validator.ValidatedModel,
                     @trigger 'disconnect', channel
 
         @server.listen port, '0.0.0.0'
-                    
+
     end: ->
         @server.close()
         core.core::end.call @

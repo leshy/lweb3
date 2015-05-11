@@ -52,6 +52,7 @@ protocolHost = exports.protocolHost = core.extend4000
         if protocol.functions then _.extend @, protocol.functions()
 
 channel = exports.channel = protocolHost.extend4000
+    getRealm: (data) -> data
     send: (msg) -> throw 'not implemented'
 
 protocol = exports.protocol = core.extend4000
@@ -62,6 +63,10 @@ protocol = exports.protocol = core.extend4000
 server = exports.server = protocolHost.extend4000
     initialize: ->
         @clients = @children = {}
+
+        if channelClass = @get('channelClass') or @channelClass
+            @channelClass = @defaultChannelClass.extend4000 channelClass
+        else @channelClass = @defaultChannelClass
 
 # Just a common pattern,
 # this is for model that hosts bunch of models of a same type with names and references to parent

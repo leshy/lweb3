@@ -11,26 +11,26 @@ core = require '../core'
 webSocketChannel = exports.webSocketChannel = core.channel.extend4000
     defaults:
         name: 'webSocket'
-        
+
     initialize: ->
-        realm = { client: @ }
-        
+        realm = @getRealm { client: @ }
+
         @when 'socketIo', (@socketIo) =>
             if id = @socketIo.id then @set name: id
             @socketIo.on 'msg', (msg) =>
                 @log "<", msg
                 @event msg, realm
                 @trigger 'msg', msg
-                 
+
             @socketIo.on 'disconnect', =>
                 @trigger 'disconnect'
                 @log "Lost Connection"
                 @end()
-                                    
+
             @when 'parent', (parent) =>
                 parent.on 'end', => @end()
                 @on 'msg', (msg) => parent.event msg, realm
-        
+
     send: (msg) ->
         @log ">", msg
         try
@@ -40,4 +40,3 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
             throw err
 
         @socketIo.emit 'msg', msg
-

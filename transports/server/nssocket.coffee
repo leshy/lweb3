@@ -18,15 +18,16 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
     defaults:
         name: 'nssocketServer'
 
+    defaultChannelClass: exports.nssocketChannel
+
     initialize: ->
         port = @get 'port'
         idcounter = 0
 
-        channelClass = exports.nssocketChannel.extend4000 (@get('channelClass') or @channelClass or {})
         @nssocket = nssocket.createServer (clientSocket) =>
             name = ++idcounter
             @log 'connection received', idcounter
-            channel = new channelClass parent: @, nssocket: clientSocket, name: name
+            channel = new @channelClass parent: @, nssocket: clientSocket, name: name
 
             channel.on 'change:name', (model,newname) =>
                 delete @clients[name]
