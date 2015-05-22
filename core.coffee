@@ -53,9 +53,7 @@ protocolHost = exports.protocolHost = core.extend4000
 
 
 channel = exports.channel = protocolHost.extend4000
-    initialize: ->
-        @realm = @getRealm()
-
+    initialize: -> @realm = @getRealm()
     send: (msg) -> throw 'not implemented'
     getRealm: () -> { client: @ }
 

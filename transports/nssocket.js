@@ -32,7 +32,9 @@
             return _this.trigger('connect');
           });
           return _this.nssocket.on('close', function() {
-            return _this.trigger('disconnect');
+            _this.trigger('disconnect');
+            _this.log("Lost Connection");
+            return _this.end();
           });
         };
       })(this));

@@ -7,10 +7,12 @@ validator = require('validator2-extras'); v = validator.v
 
 core = require '../core'
 
+
 query = core.core.extend4000
     end: () ->
         @get('unsubscribe')()
         @parent.endQuery @id
+
 
 client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     validator:
@@ -50,12 +52,15 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
         #setTimeout unsubscribe, timeout
         return new query parent: @, id: id, unsubscribe: unsubscribe
 
+
+
 reply = core.core.extend4000
     initialize: ->
         @set name: @get 'id'
         @unsubscribe = @parent.parent.subscribe type: 'queryCancel', id: @get('id'), =>
             @log 'got query cancel request'
             @cancel()
+
         @parent.on 'end', => @cancel()
 
     write: (msg) ->
@@ -77,6 +82,7 @@ reply = core.core.extend4000
         @trigger 'end'
 
 
+
 serverServer = exports.serverServer = core.protocol.extend4000
     defaults:
         name: 'queryServerServer'
@@ -86,7 +92,7 @@ serverServer = exports.serverServer = core.protocol.extend4000
 
     subscribe: (pattern,callback) ->
         subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) =>
-            callback payload, new reply(id: id, parent: realm.client.queryServer), realm
+            callback payload, new reply(id: id, parent: realm.client.queryServer, realm: realm), realm
 
     initialize: ->
         @when 'parent', (parent) =>
@@ -98,6 +104,7 @@ serverServer = exports.serverServer = core.protocol.extend4000
 
     channel: (channel) ->
         channel.addProtocol new server verbose: @get 'verbose'
+
 
 
 server = exports.server = core.protocol.extend4000
@@ -126,4 +133,4 @@ server = exports.server = core.protocol.extend4000
 
     subscribe: (pattern=true, callback) ->
         subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) =>
-            callback payload, new reply(id: id, parent: @), realm
+            callback payload, new reply(id: id, parent: @, realm: realm), realm

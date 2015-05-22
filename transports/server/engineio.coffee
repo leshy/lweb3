@@ -42,6 +42,7 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
     end: ->
         if @ended then return
         @ended = true
+
         #_.map @socketIo.sockets.sockets, (socket) ->
         #    socket.disconnect()
 

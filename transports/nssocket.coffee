@@ -18,7 +18,10 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
         @event msg, @realm
 
       @nssocket.on 'start', => @trigger 'connect'
-      @nssocket.on 'close', => @trigger 'disconnect'
+      @nssocket.on 'close', =>
+        @trigger 'disconnect'
+        @log "Lost Connection"
+        @end()
 
     @when 'parent', (parent) =>
       #parent.on 'end', => @end()
