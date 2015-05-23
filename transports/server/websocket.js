@@ -40,8 +40,7 @@
           _this.log('connection received from ' + name);
           channel = new _this.channelClass({
             parent: _this,
-            socketIo: socketIoClient,
-            verbose: _this.get('verbose')
+            socketIo: socketIoClient
           });
           channel.on('change:name', function(model, newname) {
             delete _this.clients[name];

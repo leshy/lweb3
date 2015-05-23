@@ -28,7 +28,7 @@ webSocketServer = exports.webSocketServer = core.server.extend4000 validator.Val
         @socketIo.on 'connection', (socketIoClient) =>
             name = socketIoClient.id
             @log 'connection received from ' + name
-            channel = new @channelClass parent: @, socketIo: socketIoClient, verbose: @get('verbose')
+            channel = new @channelClass parent: @, socketIo: socketIoClient
 
             channel.on 'change:name', (model,newname) =>
                 delete @clients[name]

@@ -28,21 +28,12 @@
     http = Http.createServer(app);
     http.listen(++port);
     lwebs = new Server.webSocketServer({
-      http: http
+      http: http,
+      verbose: true
     });
     lwebc = new Client.webSocketClient({
-      host: 'http://localhost:' + port
-    });
-    lwebs.log = new logger3.Logger({
-      outputs: {
-        Console: {}
-      },
-      context: {
-        tags: ['webSocketServer']
-      }
-    });
-    lwebc.log = new logger3.Logger({
-      outputs: {}
+      host: 'http://localhost:' + port,
+      verbose: true
     });
     return lwebs.on('connect', function(s) {
       return callback(lwebs, s, lwebc, function(test) {
@@ -220,7 +211,6 @@
       lwebs.onQuery({
         bla: Number
       }, function(msg, reply, realm) {
-        console.log("SERVERQUERY", msg);
         return reply.end({
           bla: 666
         });
@@ -339,7 +329,6 @@
               return perm.create(true);
             }
           });
-          console.log(serverC.permissions);
           clientC = c.collection('bla');
           clientM = clientC.defineModel('bla', {});
           x = new clientM({
@@ -350,7 +339,6 @@
               test.error(err);
             }
             return x.remove(function(err, data) {
-              console.log(err, data);
               if (!err) {
                 test.error('remove passed');
               }

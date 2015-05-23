@@ -55,7 +55,6 @@
       }
       this.query = this.parent.parent.query(msg, (function(_this) {
         return function(msg) {
-          _this.log('#' + msg);
           callback(msg);
           return _this.event(msg);
         };

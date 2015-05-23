@@ -55,6 +55,21 @@
       return true;
     },
     initialize: function(options) {
+      var logSettings;
+      if (this.get('log') != null) {
+        this.log = this.get('log');
+      } else if (!this.get('parent')) {
+        logSettings = {
+          outputs: {},
+          context: {
+            tags: [this.get('name')]
+          }
+        };
+        this.log = new logger3.Logger(h.extend(logSettings, options.logSettings || {}));
+        if (this.get('verbose')) {
+          this.log.outputs.push(new logger3.Console());
+        }
+      }
       return this.protocols = {};
     },
     hasProtocol: function(protocol) {

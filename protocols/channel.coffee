@@ -26,7 +26,7 @@ clientChannel = core.core.extend4000
         if pattern then msg.pattern = pattern
 
         @query = @parent.parent.query msg, (msg) =>
-            @log '#' + msg
+            #@log '#' + msg
             callback msg
             @event msg
 

@@ -18,11 +18,8 @@ gimmeEnv = (callback) ->
     # I dont know why but I need to cycle ports, maybe http doesn't fully close, I don't know man.
     http.listen ++port
 
-    lwebs = new Server.webSocketServer http: http
-    lwebc = new Client.webSocketClient host: 'http://localhost:' + port
-
-    lwebs.log = new logger3.Logger({ outputs: { Console: {} }, context: { tags: [ 'webSocketServer'] } })
-    lwebc.log = new logger3.Logger({ outputs: {} })
+    lwebs = new Server.webSocketServer http: http, verbose: true
+    lwebc = new Client.webSocketClient host: 'http://localhost:' + port, verbose: true
 
     lwebs.on 'connect', (s) -> callback lwebs, s, lwebc, (test) ->
         lwebc.end()
@@ -127,7 +124,7 @@ exports.queryServerServer = (test) ->
         lwebs.addProtocol new query.serverServer verbose: false
 
         lwebs.onQuery bla: Number, (msg,reply,realm) ->
-            console.log "SERVERQUERY", msg
+            #console.log "SERVERQUERY", msg
             reply.end( bla: 666 )
 
         c.addProtocol new query.client verbose: false
@@ -214,7 +211,7 @@ exports.CollectionProtocolPermissions = (test) ->
                     permissions: (perm) ->
                         perm.create true
 
-                console.log serverC.permissions
+                #console.log serverC.permissions
 
                 clientC = c.collection 'bla'
                 clientM = clientC.defineModel 'bla', {}
@@ -224,7 +221,7 @@ exports.CollectionProtocolPermissions = (test) ->
                 x.flush (err,data) ->
                     if err then test.error err
                     x.remove (err,data) ->
-                        console.log err,data
+                        #console.log err,data
                         if not err then test.error 'remove passed'
                         serverC.permissions.remove.push { matchMsg: v(true) }
                         x.remove (err,data) ->
