@@ -58,7 +58,7 @@ serverChannel = core.core.extend4000
     initialize: ->
         name = @get 'name'
         @clients = []
-        @log 'initialized ' + name
+        @log 'channel init'
 
     join: (reply,pattern) ->
         @log 'client joined'

@@ -137,10 +137,10 @@
     return gimmeEnv(function(lwebs, s, c, done) {
       var total;
       s.addProtocol(new query.server({
-        verbose: true
+        verbose: false
       }));
       c.addProtocol(new query.client({
-        verbose: true
+        verbose: false
       }));
       s.queryServer.subscribe({
         test: Number
@@ -175,16 +175,16 @@
     query = require('./protocols/query');
     return gimmeEnv(function(lwebs, s, c, done) {
       s.addProtocol(new query.server({
-        verbose: true
+        verbose: false
       }));
       c.addProtocol(new query.client({
-        verbose: true
+        verbose: false
       }));
       s.addProtocol(new channel.server({
-        verbose: true
+        verbose: false
       }));
       c.addProtocol(new channel.client({
-        verbose: true
+        verbose: false
       }));
       c.join('testchannel', function(msg) {
         test.equal(msg.bla, 3, "bla isn't 3. BLA ISN'T 3 MAN!!!");
@@ -215,7 +215,7 @@
       s.verbose = true;
       c.verbose = true;
       lwebs.addProtocol(new query.serverServer({
-        verbose: true
+        verbose: false
       }));
       lwebs.onQuery({
         bla: Number
@@ -226,7 +226,7 @@
         });
       });
       c.addProtocol(new query.client({
-        verbose: true
+        verbose: false
       }));
       return c.query({
         bla: 3
@@ -254,14 +254,14 @@
               db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
               db.open (err,data) ->
                   if err then test.fail err
-                  s.addProtocol new query.server verbose: true
-                  s.addProtocol new channel.server verbose: true
-                  s.addProtocol new collectionProtocol.server verbose: true
+                  s.addProtocol new query.server verbose: false
+                  s.addProtocol new channel.server verbose: false
+                  s.addProtocol new collectionProtocol.server verbose: false
   
-                  c.addProtocol new query.client verbose: true
-                  c.addProtocol new channel.client verbose: true
+                  c.addProtocol new query.client verbose: false
+                  c.addProtocol new channel.client verbose: false
                   c.addProtocol new collectionProtocol.client
-                      verbose: true
+                      verbose: false
                       collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
   
   
@@ -305,22 +305,22 @@
             test.fail(err);
           }
           s.addProtocol(new query.server({
-            verbose: true
+            verbose: false
           }));
           s.addProtocol(new channel.server({
-            verbose: true
+            verbose: false
           }));
           s.addProtocol(new collectionProtocol.server({
-            verbose: true
+            verbose: false
           }));
           c.addProtocol(new query.client({
-            verbose: true
+            verbose: false
           }));
           c.addProtocol(new channel.client({
-            verbose: true
+            verbose: false
           }));
           c.addProtocol(new collectionProtocol.client({
-            verbose: true,
+            verbose: false,
             collectionClass: collectionsC.ModelMixin.extend4000(collectionsC.ReferenceMixin, collectionProtocol.clientCollection)
           }));
           mongoCollection = new collectionsS.MongoCollection({

@@ -96,7 +96,7 @@
       var name;
       name = this.get('name');
       this.clients = [];
-      return this.log('initialized ' + name);
+      return this.log('channel init');
     },
     join: function(reply, pattern) {
       this.log('client joined');

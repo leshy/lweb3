@@ -77,8 +77,8 @@ exports.QueryProtocolCancel = (test) ->
     query = require('./protocols/query')
 
     gimmeEnv (lwebs, s, c,done) ->
-        s.addProtocol new query.server( verbose: true )
-        c.addProtocol new query.client( verbose: true )
+        s.addProtocol new query.server( verbose: false )
+        c.addProtocol new query.client( verbose: false )
 
         s.queryServer.subscribe { test: Number }, (msg, reply) ->
             reply.write reply: msg.test + 3
@@ -101,10 +101,10 @@ exports.ChannelProtocol = (test) ->
     query = require('./protocols/query')
 
     gimmeEnv (lwebs, s, c, done) ->
-        s.addProtocol new query.server( verbose: true )
-        c.addProtocol new query.client( verbose: true )
-        s.addProtocol new channel.server( verbose: true )
-        c.addProtocol new channel.client( verbose: true )
+        s.addProtocol new query.server( verbose: false )
+        c.addProtocol new query.client( verbose: false )
+        s.addProtocol new channel.server( verbose: false )
+        c.addProtocol new channel.client( verbose: false )
 
         c.join ('testchannel'), (msg) ->
             test.equal msg.bla, 3, "bla isn't 3. BLA ISN'T 3 MAN!!!"
@@ -124,13 +124,13 @@ exports.queryServerServer = (test) ->
         s.verbose = true
         c.verbose = true
 
-        lwebs.addProtocol new query.serverServer verbose: true
+        lwebs.addProtocol new query.serverServer verbose: false
 
         lwebs.onQuery bla: Number, (msg,reply,realm) ->
             console.log "SERVERQUERY", msg
             reply.end( bla: 666 )
 
-        c.addProtocol new query.client verbose: true
+        c.addProtocol new query.client verbose: false
 
         c.query bla: 3, (reply,end) ->
             test.equal end, true
@@ -149,14 +149,14 @@ exports.CollectionProtocol = (test) ->
             db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
             db.open (err,data) ->
                 if err then test.fail err
-                s.addProtocol new query.server verbose: true
-                s.addProtocol new channel.server verbose: true
-                s.addProtocol new collectionProtocol.server verbose: true
+                s.addProtocol new query.server verbose: false
+                s.addProtocol new channel.server verbose: false
+                s.addProtocol new collectionProtocol.server verbose: false
 
-                c.addProtocol new query.client verbose: true
-                c.addProtocol new channel.client verbose: true
+                c.addProtocol new query.client verbose: false
+                c.addProtocol new channel.client verbose: false
                 c.addProtocol new collectionProtocol.client
-                    verbose: true
+                    verbose: false
                     collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
 
 
@@ -193,14 +193,14 @@ exports.CollectionProtocolPermissions = (test) ->
             db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
             db.open (err,data) ->
                 if err then test.fail err
-                s.addProtocol new query.server verbose: true
-                s.addProtocol new channel.server verbose: true
-                s.addProtocol new collectionProtocol.server verbose: true
+                s.addProtocol new query.server verbose: false
+                s.addProtocol new channel.server verbose: false
+                s.addProtocol new collectionProtocol.server verbose: false
 
-                c.addProtocol new query.client verbose: true
-                c.addProtocol new channel.client verbose: true
+                c.addProtocol new query.client verbose: false
+                c.addProtocol new channel.client verbose: false
                 c.addProtocol new collectionProtocol.client
-                    verbose: true
+                    verbose: false
                     collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
 
                 mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
