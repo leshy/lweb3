@@ -26,7 +26,7 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
 
         @nssocket = nssocket.createServer (clientSocket) =>
             name = ++idcounter
-            @log 'connection received', idcounter
+            @log 'connection received ' + idcounter
             channel = new @channelClass parent: @, nssocket: clientSocket, name: name
 
             channel.on 'change:name', (model,newname) =>

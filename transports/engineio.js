@@ -34,7 +34,9 @@
           }
           _this.engineIo.on('message', function(msg) {
             msg = JSON.parse(msg);
-            _this.log("<", msg);
+            _this.log('< ' + util.inspect(msg, {
+              depth: 0
+            }), msg, 'in');
             _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
           });
@@ -55,7 +57,9 @@
       })(this));
     },
     send: function(msg) {
-      this.log(">", msg);
+      this.log("> " + util.inspect(msg, {
+        depth: 0
+      }), msg, "out");
       return this.engineIo.send(JSON.stringify(msg));
     }
   });

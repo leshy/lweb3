@@ -6,6 +6,7 @@ subscriptionMan = require('subscriptionman2')
 validator = require('validator2-extras'); v = validator.v
 
 core = require '../core'
+util = require 'util'
 
 nssocketChannel = exports.nssocketChannel = core.channel.extend4000
   defaults:
@@ -14,7 +15,7 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
   initialize: ->
     @when 'nssocket', (@nssocket) =>
       @nssocket.data 'msg', (msg) =>
-        @log "<", msg
+        @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
         @event msg, @realm
 
       @nssocket.on 'start', => @trigger 'connect'
@@ -29,5 +30,5 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
         parent.event msg, @realm
 
   send: (msg) ->
-    @log ">", msg
+    @log "> " + util.inspect(msg,depth: 0), msg, "out"
     @nssocket.send 'msg', msg

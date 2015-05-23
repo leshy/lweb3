@@ -36,7 +36,7 @@
         return function(clientSocket) {
           var channel, name;
           name = ++idcounter;
-          _this.log('connection received', idcounter);
+          _this.log('connection received ' + idcounter);
           channel = new _this.channelClass({
             parent: _this,
             nssocket: clientSocket,

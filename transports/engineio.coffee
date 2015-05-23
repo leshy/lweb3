@@ -17,7 +17,7 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
             if id = @engineIo.id then @set name: id
             @engineIo.on 'message', (msg) =>
                 msg = JSON.parse(msg)
-                @log "<", msg
+                @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
                 @event msg, @realm
                 @trigger 'msg', msg
 
@@ -31,5 +31,5 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
                 @on 'msg', (msg) => parent.event msg, @realm
 
     send: (msg) ->
-        @log ">", msg
+        @log "> " + util.inspect(msg,depth: 0), msg, "out"
         @engineIo.send JSON.stringify msg

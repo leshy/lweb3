@@ -43,9 +43,13 @@
             id: String
           }, function(msg) {
             if (msg.end) {
-              _this.log('query completed', msg.payload, 'q-' + msg.id);
+              _this.log('query completed', {
+                payload: msg.payload
+              }, 'q-' + msg.id);
             } else {
-              _this.log('query reply', msg.payload, 'q-' + msg.id);
+              _this.log('query reply', {
+                payload: msg.payload
+              }, 'q-' + msg.id);
             }
             return _this.event(msg);
           });
@@ -206,7 +210,9 @@
             payload: true
           }, function(msg, realm) {
             var _ref;
-            _this.log('query receive', msg.payload, 'q-' + msg.id);
+            _this.log('query receive', {
+              payload: msg.payload
+            }, 'q-' + msg.id);
             _this.event(msg.payload, msg.id, realm);
             return (_ref = _this.core) != null ? _ref.event(msg.payload, msg.id, realm) : void 0;
           });
@@ -228,9 +234,13 @@
       };
       if (end) {
         msg.end = true;
-        this.log('query end', payload, 'q-' + id);
+        this.log('query end', {
+          payload: payload
+        }, 'q-' + id);
       } else {
-        this.log('query reply', payload, 'q-' + id);
+        this.log('query reply', {
+          payload: payload
+        }, 'q-' + id);
       }
       return this.parent.send(msg);
     },

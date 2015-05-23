@@ -28,7 +28,7 @@ core = exports.core = subscriptionMan.fancy.extend4000
 
 protocolHost = exports.protocolHost = core.extend4000
     log: -> true
-    initialize: (options) ->
+    initialize: (options={}) ->
 
         if @get('log')? then @log = @get 'log'
         else if not @get 'parent'

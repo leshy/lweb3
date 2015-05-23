@@ -56,6 +56,9 @@
     },
     initialize: function(options) {
       var logSettings;
+      if (options == null) {
+        options = {};
+      }
       if (this.get('log') != null) {
         this.log = this.get('log');
       } else if (!this.get('parent')) {

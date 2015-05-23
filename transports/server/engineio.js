@@ -33,8 +33,11 @@
       this.engineIo = engineio.attach(this.http);
       return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
-          var channel, name;
-          _this.log('connection received', name = engineIoClient.id, engineIoClient.request.socket.remoteAddress, engineIoClient.request.headers);
+          var channel, ip, name;
+          _this.log('connection received from ' + (name = engineIoClient.id), {
+            ip: ip = engineIoClient.request.socket.remoteAddress,
+            headers: engineIoClient.request.headers
+          });
           channel = new _this.channelClass({
             parent: _this,
             engineIo: engineIoClient,

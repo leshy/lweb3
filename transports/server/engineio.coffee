@@ -26,7 +26,9 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
         @engineIo = engineio.attach @http
 
         @engineIo.on 'connection', (engineIoClient) =>
-            @log 'connection received', name = engineIoClient.id, engineIoClient.request.socket.remoteAddress, engineIoClient.request.headers
+
+            @log 'connection received from ' + name = engineIoClient.id, { ip: ip = engineIoClient.request.socket.remoteAddress, headers: engineIoClient.request.headers }
+
             channel = new @channelClass parent: @, engineIo: engineIoClient, name: name
 
             channel.on 'change:name', (model,newname) =>

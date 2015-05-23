@@ -27,8 +27,8 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     initialize: ->
         @when 'parent', (parent) =>
             parent.subscribe { type: 'reply', id: String }, (msg) =>
-                if msg.end then @log 'query completed', msg.payload, 'q-' + msg.id
-                else @log 'query reply',msg.payload, 'q-' + msg.id
+                if msg.end then @log 'query completed', { payload: msg.payload }, 'q-' + msg.id
+                else @log 'query reply', { payload: msg.payload }, 'q-' + msg.id
 
                 @event msg
             parent.on 'end', => @end()
@@ -119,7 +119,7 @@ server = exports.server = core.protocol.extend4000
 
         @when 'parent', (parent) =>
             parent.subscribe { type: 'query', payload: true }, (msg, realm) =>
-                @log 'query receive', msg.payload, 'q-' + msg.id
+                @log 'query receive', { payload: msg.payload }, 'q-' + msg.id
                 @event msg.payload, msg.id, realm
                 @core?.event msg.payload, msg.id, realm
 
@@ -127,8 +127,8 @@ server = exports.server = core.protocol.extend4000
 
     send: (payload,id,end=false) ->
         msg = { type: 'reply', payload: payload, id: id }
-        if end then msg.end = true; @log 'query end', payload, 'q-' + id
-        else @log 'query reply', payload, 'q-' + id
+        if end then msg.end = true; @log 'query end', { payload: payload }, 'q-' + id
+        else @log 'query reply', { payload: payload }, 'q-' + id
         @parent.send msg
 
     subscribe: (pattern=true, callback) ->
