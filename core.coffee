@@ -1,6 +1,8 @@
 _ = require 'underscore'
 Backbone = require 'backbone4000'
-helpers = require 'helpers'
+h = helpers = require 'helpers'
+
+logger3 = require 'logger3'
 
 subscriptionMan = require('subscriptionman2')
 validator = require('validator2-extras'); v = validator.v
@@ -9,10 +11,11 @@ startTime = new Date().getTime()
 
 core = exports.core = subscriptionMan.fancy.extend4000
     initialize: ->
-        @verbose = @get('verbose') or false
-        #console.log "initializing",@name(), @verbose
+
         @when 'parent', (@parent) =>
-            @verbose = @get('verbose') or @parent?.verbose or false
+            @log = @parent.log.child { tags: [ @get('name') or "unnamed" ] }
+            if @get('verbose')
+                @log.outputs.push new logger3.Console()
 
     name: ->
         if @parent then @parent.name() + "-" + @get('name')
@@ -23,13 +26,12 @@ core = exports.core = subscriptionMan.fancy.extend4000
         @log 'ending'
         @trigger 'end'
 
-    log: (args...) ->
-        @trigger 'log', args
-        if @verbose then console.log.apply console, [].concat( '::', new Date().getTime() - startTime, @name(), args)
-
 
 protocolHost = exports.protocolHost = core.extend4000
-    initialize: ->
+    log: -> true
+    initialize: (options) ->
+        #@log = new logger3.Logger({ outputs: {}, context: { tags: [ @get('name') ]} })
+        #if @get('verbose') then @log.outputs.push new logger3.Console()
         @protocols = {}
 
     hasProtocol: (protocol) ->

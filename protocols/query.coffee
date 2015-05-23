@@ -27,14 +27,14 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     initialize: ->
         @when 'parent', (parent) =>
             parent.subscribe { type: 'reply', id: String }, (msg) =>
-                if msg.end then @log 'query completed', msg.id, msg.payload
-                else @log 'got query reply', msg.id, msg.payload
+                if msg.end then @log 'query completed', msg.payload, 'q-' + msg.id
+                else @log 'query reply',msg.payload, 'q-' + msg.id
 
                 @event msg
             parent.on 'end', => @end()
 
     endQuery: (id) ->
-        @log 'canceling query', id
+        @log 'canceling query' + ' ' + id
         @parent.send { type: 'queryCancel', id: id }
 
     send: (msg, timeout, callback) ->
@@ -43,7 +43,7 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
             timeout = @get('timeout')
 
         @parent.send { type: 'query', id: id = helpers.uuid(10), payload: msg }
-        @log 'querying', id, msg
+        @log 'starting query', msg, 'q-' + id
 
         unsubscribe = @subscribe { type: 'reply', id: id }, (msg) =>
             if msg.end then unsubscribe()
@@ -119,7 +119,7 @@ server = exports.server = core.protocol.extend4000
 
         @when 'parent', (parent) =>
             parent.subscribe { type: 'query', payload: true }, (msg, realm) =>
-                @log 'got query',msg.id,msg.payload
+                @log 'query receive', msg.payload, 'q-' + msg.id
                 @event msg.payload, msg.id, realm
                 @core?.event msg.payload, msg.id, realm
 
@@ -127,8 +127,8 @@ server = exports.server = core.protocol.extend4000
 
     send: (payload,id,end=false) ->
         msg = { type: 'reply', payload: payload, id: id }
-        if end then msg.end = true; @log 'ending query',id,payload
-        else @log 'replying to query',id,payload
+        if end then msg.end = true; @log 'query end', payload, 'q-' + id
+        else @log 'query reply', payload, 'q-' + id
         @parent.send msg
 
     subscribe: (pattern=true, callback) ->

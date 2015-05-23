@@ -14,9 +14,11 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
 
     initialize: ->
         @when 'socketIo', (@socketIo) =>
-            if id = @socketIo.id then @set name: id
+            if id = @socketIo.id
+                @set name: id
+                @log.extendContext { tags: [ id ] }
             @socketIo.on 'msg', (msg) =>
-                @log "<", msg
+                @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
                 @event msg, @realm
                 @trigger 'msg', msg
 
@@ -30,7 +32,7 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
                 @on 'msg', (msg) => parent.event msg, @realm
 
     send: (msg) ->
-        @log ">", msg
+        @log "> " + util.inspect(msg,depth: 0), msg, "out"
         try
             JSON.stringify(msg)
         catch err

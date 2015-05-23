@@ -43,9 +43,9 @@
             id: String
           }, function(msg) {
             if (msg.end) {
-              _this.log('query completed', msg.id, msg.payload);
+              _this.log('query completed', msg.payload, 'q-' + msg.id);
             } else {
-              _this.log('got query reply', msg.id, msg.payload);
+              _this.log('query reply', msg.payload, 'q-' + msg.id);
             }
             return _this.event(msg);
           });
@@ -56,7 +56,7 @@
       })(this));
     },
     endQuery: function(id) {
-      this.log('canceling query', id);
+      this.log('canceling query' + ' ' + id);
       return this.parent.send({
         type: 'queryCancel',
         id: id
@@ -73,7 +73,7 @@
         id: id = helpers.uuid(10),
         payload: msg
       });
-      this.log('querying', id, msg);
+      this.log('starting query', msg, 'q-' + id);
       unsubscribe = this.subscribe({
         type: 'reply',
         id: id
@@ -206,7 +206,7 @@
             payload: true
           }, function(msg, realm) {
             var _ref;
-            _this.log('got query', msg.id, msg.payload);
+            _this.log('query receive', msg.payload, 'q-' + msg.id);
             _this.event(msg.payload, msg.id, realm);
             return (_ref = _this.core) != null ? _ref.event(msg.payload, msg.id, realm) : void 0;
           });
@@ -228,9 +228,9 @@
       };
       if (end) {
         msg.end = true;
-        this.log('ending query', id, payload);
+        this.log('query end', payload, 'q-' + id);
       } else {
-        this.log('replying to query', id, payload);
+        this.log('query reply', payload, 'q-' + id);
       }
       return this.parent.send(msg);
     },

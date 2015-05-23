@@ -31,9 +31,14 @@
             _this.set({
               name: id
             });
+            _this.log.extendContext({
+              tags: [id]
+            });
           }
           _this.socketIo.on('msg', function(msg) {
-            _this.log("<", msg);
+            _this.log('< ' + util.inspect(msg, {
+              depth: 0
+            }), msg, 'in');
             _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
           });
@@ -55,7 +60,9 @@
     },
     send: function(msg) {
       var err;
-      this.log(">", msg);
+      this.log("> " + util.inspect(msg, {
+        depth: 0
+      }), msg, "out");
       try {
         JSON.stringify(msg);
       } catch (_error) {

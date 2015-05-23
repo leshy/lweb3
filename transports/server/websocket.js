@@ -36,11 +36,12 @@
       this.socketIo.on('connection', (function(_this) {
         return function(socketIoClient) {
           var channel, name;
-          _this.log('connection received', name = socketIoClient.id);
+          name = socketIoClient.id;
+          _this.log('connection received from ' + name);
           channel = new _this.channelClass({
             parent: _this,
             socketIo: socketIoClient,
-            name: name
+            verbose: _this.get('verbose')
           });
           channel.on('change:name', function(model, newname) {
             delete _this.clients[name];

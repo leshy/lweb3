@@ -9,6 +9,7 @@ Http = require 'http'
 
 port = 8192
 colors = require 'colors'
+logger3 = require 'logger3'
 
 gimmeEnv = (callback) ->
     app = express()
@@ -17,8 +18,11 @@ gimmeEnv = (callback) ->
     # I dont know why but I need to cycle ports, maybe http doesn't fully close, I don't know man.
     http.listen ++port
 
-    lwebs = new Server.webSocketServer http: http, verbose: false
-    lwebc = new Client.webSocketClient host: 'http://localhost:' + port, verbose: false
+    lwebs = new Server.webSocketServer http: http
+    lwebc = new Client.webSocketClient host: 'http://localhost:' + port
+
+    lwebs.log = new logger3.Logger({ outputs: { Console: {} }, context: { tags: [ 'webSocketServer'] } })
+    lwebc.log = new logger3.Logger({ outputs: {} })
 
     lwebs.on 'connect', (s) -> callback lwebs, s, lwebc, (test) ->
         lwebc.end()
@@ -53,8 +57,8 @@ exports.QueryProtocol = (test) ->
     query = require('./protocols/query')
 
     gimmeEnv (lwebs, s, c,done) ->
-        s.addProtocol new query.server( verbose: true )
-        c.addProtocol new query.client( verbose: true )
+        s.addProtocol new query.server( verbose: false )
+        c.addProtocol new query.client( verbose: false )
 
         s.queryServer.subscribe { test: Number }, (msg, reply) ->
             reply.write reply: msg.test + 3
