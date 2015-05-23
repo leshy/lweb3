@@ -26,7 +26,7 @@ clientChannel = core.core.extend4000
         if pattern then msg.pattern = pattern
 
         @query = @parent.parent.query msg, (msg) =>
-            @log '#',msg
+            @log '#' + msg
             callback msg
             @event msg
 
@@ -58,7 +58,7 @@ serverChannel = core.core.extend4000
     initialize: ->
         name = @get 'name'
         @clients = []
-        @log 'initialized',name
+        @log 'initialized ' + name
 
     join: (reply,pattern) ->
         @log 'client joined'
