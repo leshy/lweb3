@@ -6,7 +6,7 @@ subscriptionMan = require('subscriptionman2')
 validator = require('validator2-extras'); v = validator.v
 
 core = require '../core'
-
+util = require 'util'
 
 query = core.core.extend4000
     end: () ->
@@ -119,7 +119,7 @@ server = exports.server = core.protocol.extend4000
 
         @when 'parent', (parent) =>
             parent.subscribe { type: 'query', payload: true }, (msg, realm) =>
-                @log 'query receive', { payload: msg.payload }, 'q-' + msg.id
+                @log 'query receive ' + util.inspect(msg.payload, depth: 0), { payload: msg.payload }, 'q-' + msg.id
                 @event msg.payload, msg.id, realm
                 @core?.event msg.payload, msg.id, realm
 
@@ -127,8 +127,8 @@ server = exports.server = core.protocol.extend4000
 
     send: (payload,id,end=false) ->
         msg = { type: 'reply', payload: payload, id: id }
-        if end then msg.end = true; @log 'query end', { payload: payload }, 'q-' + id
-        else @log 'query reply', { payload: payload }, 'q-' + id
+        if end then msg.end = true; @log 'query end ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
+        else @log 'query reply ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
         @parent.send msg
 
     subscribe: (pattern=true, callback) ->

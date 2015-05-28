@@ -29,13 +29,11 @@ core = exports.core = subscriptionMan.fancy.extend4000
 protocolHost = exports.protocolHost = core.extend4000
     log: -> true
     initialize: (options={}) ->
-
         if @get('log')? then @log = @get 'log'
         else if not @get 'parent'
             logSettings = { outputs: {}, context: { tags: [ @get('name') ]} }
             @log = new logger3.Logger(h.extend logSettings, (options.logSettings or {}))
             if @get('verbose') then @log.outputs.push new logger3.Console()
-
         @protocols = {}
 
     hasProtocol: (protocol) ->
