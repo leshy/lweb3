@@ -13,7 +13,6 @@ query = core.core.extend4000
         @get('unsubscribe')()
         @parent.endQuery @id
 
-
 client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     validator:
         timeout: v().Default(3000).Number()
@@ -82,7 +81,6 @@ reply = core.core.extend4000
         @trigger 'end'
 
 
-
 serverServer = exports.serverServer = core.protocol.extend4000
     defaults:
         name: 'queryServerServer'
@@ -104,7 +102,6 @@ serverServer = exports.serverServer = core.protocol.extend4000
 
     channel: (channel) ->
         channel.addProtocol new server verbose: @get 'verbose'
-
 
 
 server = exports.server = core.protocol.extend4000

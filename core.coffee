@@ -2,19 +2,23 @@ _ = require 'underscore'
 Backbone = require 'backbone4000'
 h = helpers = require 'helpers'
 
-logger3 = require 'logger3'
-
 subscriptionMan = require('subscriptionman2')
 validator = require('validator2-extras'); v = validator.v
 
 startTime = new Date().getTime()
 
 core = exports.core = subscriptionMan.fancy.extend4000
+    log: (args...) ->
+        if @verbose then console.log args
+        if @logger then @logger.log.apply @logger,  args
+
     initialize: ->
+        if @get('verbose') then @verobse = true
+
         @when 'parent', (@parent) =>
-            @log = @parent.log.child { tags: [ @get('name') or "unnamed" ] }
-            if @get('verbose')
-                @log.outputs.push new logger3.Console()
+            if @parent.verbose then @verbose = true
+            if @parent.logger
+                @logger = @parent.logger.child { tags: [ @get('name') or "unnamed" ] }
 
     name: ->
         if @parent then @parent.name() + "-" + @get('name')
@@ -25,15 +29,10 @@ core = exports.core = subscriptionMan.fancy.extend4000
         @log 'ending'
         @trigger 'end'
 
-
 protocolHost = exports.protocolHost = core.extend4000
-    log: -> true
+
     initialize: (options={}) ->
-        if @get('log')? then @log = @get 'log'
-        else if not @get 'parent'
-            logSettings = { outputs: {}, context: { tags: [ @get('name') ]} }
-            @log = new logger3.Logger(h.extend logSettings, (options.logSettings or {}))
-            if @get('verbose') then @log.outputs.push new logger3.Console()
+        if @get('logger')? then @logger = @get 'logger'
         @protocols = {}
 
     hasProtocol: (protocol) ->

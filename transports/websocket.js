@@ -31,9 +31,11 @@
             _this.set({
               name: id
             });
-            newtags = {};
-            newtags['ws-' + id] = true;
-            _this.log.context.tags = newtags;
+            if (_this.logger) {
+              newtags = {};
+              newtags['ws-' + id] = true;
+              _this.logger.context.tags = newtags;
+            }
           }
           _this.socketIo.on('msg', function(msg) {
             _this.log('< ' + util.inspect(msg, {
