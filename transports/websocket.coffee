@@ -15,11 +15,7 @@ webSocketChannel = exports.webSocketChannel = core.channel.extend4000
     initialize: ->
         @when 'socketIo', (@socketIo) =>
             if id = @socketIo.id
-                @set name: id
-                if @logger
-                    newtags = {}
-                    newtags[ 'ws-' + id ] = true
-                    @logger.context.tags =  newtags
+                @set name: 'ws-' + id
 
             @socketIo.on 'msg', (msg) =>
                 @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'

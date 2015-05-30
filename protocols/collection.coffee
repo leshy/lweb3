@@ -1,6 +1,6 @@
 _ = require 'underscore'
 Backbone = require 'backbone4000'
-helpers = require 'helpers'
+h = helpers = require 'helpers'
 async = require 'async'
 
 subscriptionMan = require('subscriptionman2')
@@ -71,7 +71,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         c = @c = @get 'collection'
         @permissions = {}
 
-        @set name: name =  c.get('name')
+        @set name: (name =  c.get('name'))
 
         broadcast = @get('broadcast')
         if broadcast is true or broadcast is '*'
@@ -82,13 +82,13 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
         if broadcast
             if broadcast.update
                 @c.on 'update', (data) =>
-                    if id = data.id then @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'update', update: data
+                    if id = data.id then @parent.parent.channel(name + ":" + id).broadcast action: 'update', update: data
 
             if broadcast.remove
                 @c.on 'remove', (data) => # should get POST REMOVE data from event, so that it can transmit ids
                     if id = data.id
                         #@parent.parent.channel(name).broadcast action: 'remove', remove: id
-                        @parent.parent.channel(@get('name') + ":" + id).broadcast action: 'remove'
+                        @parent.parent.channel(name + ":" + id).broadcast action: 'remove'
 
             if broadcast.create
                 @c.on 'create', (data) =>
@@ -136,7 +136,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                 if msg.call and msg.pattern?.constructor is Object
                     return @applyPermission @permissions.call, msg, realm, (err,msg) =>
                         if err then return res.end err: 'access denied'
-                        @log 'call', msg.pattern, msg.call, msg.args
+                        @log 'call', msg, msg.call
                         c.fcall msg.call, msg.args or [], msg.pattern, realm, callbackToRes(res), (err,data) ->
                             if err?.name then err = err.name
                             res.end err: err, data: data

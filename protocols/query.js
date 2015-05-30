@@ -151,17 +151,29 @@
     },
     functions: function() {
       return {
-        onQuery: _.bind(this.subscribe, this)
+        onQuery: _.bind(this.subscribe, this),
+        onQueryError: (function(_this) {
+          return function(callback) {
+            return _this.on('error', callback);
+          };
+        })(this)
       };
     },
     subscribe: function(pattern, callback) {
       return subscriptionMan.fancy.prototype.subscribe.call(this, pattern, (function(_this) {
         return function(payload, id, realm) {
-          return callback(payload, new reply({
+          var error, r;
+          r = new reply({
             id: id,
             parent: realm.client.queryServer,
             realm: realm
-          }), realm);
+          });
+          try {
+            return callback(payload, r, realm);
+          } catch (_error) {
+            error = _error;
+            return _this.trigger("error", payload, r, realm, error, pattern);
+          }
         };
       })(this));
     },

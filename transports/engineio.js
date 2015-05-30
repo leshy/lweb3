@@ -29,7 +29,7 @@
           _this.engineIo = engineIo;
           if (id = _this.engineIo.id) {
             _this.set({
-              name: id
+              name: 'eio-' + id
             });
           }
           _this.engineIo.on('message', function(msg) {

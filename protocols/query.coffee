@@ -88,9 +88,16 @@ serverServer = exports.serverServer = core.protocol.extend4000
     functions: ->
         onQuery: _.bind @subscribe, @
 
+        onQueryError: (callback) =>
+            @on 'error', callback
+
     subscribe: (pattern,callback) ->
         subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) =>
-            callback payload, new reply(id: id, parent: realm.client.queryServer, realm: realm), realm
+            r = new reply(id: id, parent: realm.client.queryServer, realm: realm)
+            try
+                callback payload, r, realm
+            catch error
+                @trigger "error", payload, r, realm, error, pattern
 
     initialize: ->
         @when 'parent', (parent) =>

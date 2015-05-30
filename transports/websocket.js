@@ -25,17 +25,12 @@
     initialize: function() {
       return this.when('socketIo', (function(_this) {
         return function(socketIo) {
-          var id, newtags;
+          var id;
           _this.socketIo = socketIo;
           if (id = _this.socketIo.id) {
             _this.set({
-              name: id
+              name: 'ws-' + id
             });
-            if (_this.logger) {
-              newtags = {};
-              newtags['ws-' + id] = true;
-              _this.logger.context.tags = newtags;
-            }
           }
           _this.socketIo.on('msg', function(msg) {
             _this.log('< ' + util.inspect(msg, {

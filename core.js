@@ -39,8 +39,8 @@
             _this.verbose = true;
           }
           if (_this.parent.logger) {
-            return _this.logger = _this.parent.logger.child({
-              tags: [_this.get('name') || "unnamed"]
+            return _this.set({
+              logger: _this.parent.logger.child()
             });
           }
         };
@@ -69,9 +69,17 @@
       if (options == null) {
         options = {};
       }
-      if (this.get('logger') != null) {
-        this.logger = this.get('logger');
-      }
+      this.when('logger', (function(_this) {
+        return function(logger) {
+          var oldName;
+          _this.logger = logger;
+          logger.addTags(oldName = _this.get('name') || "unnamed");
+          return _this.on('change:name', function(self, name) {
+            logger.delTags(oldName);
+            return logger.addTags(oldName = name);
+          });
+        };
+      })(this));
       return this.protocols = {};
     },
     hasProtocol: function(protocol) {

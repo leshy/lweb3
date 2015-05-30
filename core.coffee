@@ -10,15 +10,15 @@ startTime = new Date().getTime()
 core = exports.core = subscriptionMan.fancy.extend4000
     log: (args...) ->
         if @verbose then console.log args
-        if @logger then @logger.log.apply @logger,  args
+        if @logger then @logger.log.apply @logger, args
 
     initialize: ->
         if @get('verbose') then @verobse = true
 
         @when 'parent', (@parent) =>
             if @parent.verbose then @verbose = true
-            if @parent.logger
-                @logger = @parent.logger.child { tags: [ @get('name') or "unnamed" ] }
+            if @parent.logger then @set logger: @parent.logger.child()
+
 
     name: ->
         if @parent then @parent.name() + "-" + @get('name')
@@ -32,7 +32,13 @@ core = exports.core = subscriptionMan.fancy.extend4000
 protocolHost = exports.protocolHost = core.extend4000
 
     initialize: (options={}) ->
-        if @get('logger')? then @logger = @get 'logger'
+        @when 'logger', (logger) =>
+            @logger = logger
+            logger.addTags oldName = (@get('name') or "unnamed")
+            @on 'change:name', (self,name) ->
+                logger.delTags oldName
+                logger.addTags oldName = name
+
         @protocols = {}
 
     hasProtocol: (protocol) ->
