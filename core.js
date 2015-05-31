@@ -69,6 +69,15 @@
       if (options == null) {
         options = {};
       }
+      this.when('parent', (function(_this) {
+        return function(parent) {
+          if (parent.logger) {
+            return _this.set({
+              logger: parent.logger.child()
+            });
+          }
+        };
+      })(this));
       this.when('logger', (function(_this) {
         return function(logger) {
           var oldName;
