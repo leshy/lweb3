@@ -131,7 +131,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                         c.findModel msg.findOne, (err,model) ->
                             if err then return callbackToRes(res)(err)
                             model.render realm, callbackToRes(res)
-                            if model.gCollect then model.gCollect()
+                            #if model.active then model.gCollect()
 
                 if msg.call and msg.pattern?.constructor is Object
                     return @applyPermission @permissions.call, msg, realm, (err,msg) =>
@@ -157,7 +157,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
                             bucketCallback = bucket.cb()
                             model.render realm, (err,data) ->
                                 if not err and not _.isEmpty(data) then res.write data
-                                if model.gCollect then model.gCollect()
+                                #if model.active then model.gCollect()
                                 bucketCallback()), ((err,data) -> endCb())
                         bucket.done (err,data) -> res.end()
 

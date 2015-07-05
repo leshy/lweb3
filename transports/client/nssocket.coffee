@@ -17,5 +17,3 @@ nssocketClient = exports.nssocketClient = exports.nssocketChannel.extend4000
         @nssocket.connect @get('host'), @get('port')
     end: ->
         @nssocket.destroy()
-    
-        

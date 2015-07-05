@@ -22,7 +22,6 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
 
     initialize: ->
         @http = @get 'http'
-
         @engineIo = engineio.attach @http
 
         @engineIo.on 'connection', (engineIoClient) =>
