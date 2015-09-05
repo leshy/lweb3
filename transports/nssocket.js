@@ -32,9 +32,9 @@
         };
       })(this));
     },
-    bindSocket: function(nssocket) {
-      this.nssocket = nssocket;
-      this.listenTo(this.nssocket, ['data', 'msg'], (function(_this) {
+    bindSocket: function(nssocket1) {
+      this.nssocket = nssocket1;
+      this.nssocket.on(['data', 'msg'], (function(_this) {
         return function(msg) {
           _this.log('< ' + util.inspect(msg, {
             depth: 0
@@ -42,17 +42,17 @@
           return _this.event(msg, _this.realm);
         };
       })(this));
-      this.listenTo(this.nssocket, 'error', (function(_this) {
+      this.nssocket.on('error', (function(_this) {
         return function(e) {
           return _this.trigger('error', e);
         };
       })(this));
-      this.listenTo(this.nssocket, 'start', (function(_this) {
+      this.nssocket.on('start', (function(_this) {
         return function() {
           return _this.trigger('connect');
         };
       })(this));
-      this.listenTo(this.nssocket, 'close', (function(_this) {
+      this.nssocket.on('close', (function(_this) {
         return function() {
           _this.trigger('disconnect');
           _this.log("Lost Connection");
@@ -62,7 +62,7 @@
       return this.when('parent', (function(_this) {
         return function(parent) {
           console.log('got parent');
-          return _this.listenTo(_this.nssocket, ['data', 'msg'], function(msg) {
+          return _this.nssocket.on(['data', 'msg'], function(msg) {
             console.log("PARENT EVENT", msg);
             return parent.event(msg, _this.realm);
           });

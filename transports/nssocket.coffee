@@ -15,20 +15,20 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
   initialize: ->
     @when 'nssocket', (nssocket) =>
       @bindSocket nssocket
-      @on 'change:nssocket', (self, nssocket) => @bindSocket nssocket
+      @on 'change:nssocket', (self, nssocket) =>
+        @bindSocket nssocket
 
-  bindSocket: (nssocket) ->
-    @nssocket = nssocket
-    @listenTo @nssocket, ['data', 'msg'], (msg) =>
+  bindSocket: (@nssocket) ->
+    @nssocket.on ['data', 'msg'], (msg) =>
       @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
       @event msg, @realm
 
-    @listenTo @nssocket, 'error', (e) =>
+    @nssocket.on 'error', (e) =>
       @trigger 'error', e
 
-    @listenTo @nssocket, 'start', => @trigger 'connect'
+    @nssocket.on 'start', => @trigger 'connect'
 
-    @listenTo @nssocket, 'close', =>
+    @nssocket.on 'close', =>
       @trigger 'disconnect'
       @log "Lost Connection"
       @end()
@@ -36,7 +36,7 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
     @when 'parent', (parent) =>
       #parent.on 'end', => @end()
       console.log 'got parent'
-      @listenTo @nssocket, [ 'data', 'msg' ], (msg) =>
+      @nssocket.on [ 'data', 'msg' ], (msg) =>
         console.log "PARENT EVENT", msg
         parent.event msg, @realm
 
