@@ -44,3 +44,4 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
 
   end: ->
     @nssocket.destroy()
+    core.channel::end.call @

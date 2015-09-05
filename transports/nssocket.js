@@ -74,7 +74,8 @@
       return this.nssocket.send('msg', msg);
     },
     end: function() {
-      return this.nssocket.destroy();
+      this.nssocket.destroy();
+      return core.channel.prototype.end.call(this);
     }
   });
 

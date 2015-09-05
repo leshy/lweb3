@@ -33,13 +33,14 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
                 delete @clients[name]
                 @clients[newname] = model
                 @trigger 'connect:' + newname, model
+
             @clients[name] = channel
             @trigger 'connect:' + name, channel
             @trigger 'connect', channel
 
             channel.on 'disconnect', =>
-                delete @clients[channel.get('name')]
-                @trigger 'disconnect', channel
+              delete @clients[channel.get('name')]
+              @trigger 'disconnect', channel
 
         @nssocket.listen @get 'port'
 
