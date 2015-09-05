@@ -34,7 +34,7 @@
       return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
           var channel, ip, name;
-          _this.log('connection received from ' + (name = engineIoClient.id), {
+          _this.log('connection received to ' + (name = engineIoClient.id), {
             ip: ip = engineIoClient.request.socket.remoteAddress,
             headers: engineIoClient.request.headers
           });

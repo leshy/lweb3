@@ -17,10 +17,8 @@ collectionProtocol = core.protocol.extend4000 core.motherShip('collection'),
     collection: _.bind @collection, @
     collections: @collections
 
-queryToCallback = (callback) ->
-  (msg,end) ->
-    #if not end then throw "this query is supposed to be translated to callback but I got multiple responses"
-    callback msg.err, msg.data
+callbackToQuery = query.callbackToQuery
+queryToCallback = query.queryToCallback
 
 clientCollection = exports.clientCollection = collectionInterface.extend4000
   initialize: ->
@@ -106,38 +104,35 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
             if matchRealm then permission.matchRealm = v(matchRealm)
             @permissions[msgType].push permission
 
-    callbackToRes = (res) -> (err,data) ->
-      if err?.name then err = err.name
-      if err then res.end err: err
-      else res.end data: data
-
     @when 'parent', (parent) =>
       parent.parent.onQuery { collection: name }, (msg, res, realm={}) =>
         if msg.create
           return @applyPermission @permissions.create, msg, realm, (err,msg) ->
             if err then return res.end err: 'access denied'
-            c.createModel msg.create, realm, callbackToRes(res)
+            c.createModel msg.create, realm, (err,data) ->
+              if err? then console.log "CREATEMODEL" err.stack
+              callbackToQuery(res)(err,data)
 
         if msg.remove
           return @applyPermission @permissions.remove, msg, realm, (err,msg) =>
             if err then return res.end err: 'access denied'
             @log 'remove', msg.remove
-            c.removeModel msg.remove, realm, callbackToRes(res)
+            c.removeModel msg.remove, realm, callbackToQuery(res)
 
         if msg.findOne
           return @applyPermission @permissions.findOne, msg, realm, (err,msg) =>
             if err then return res.end err: 'access denied'
             @log 'findOne', msg.findOne
             c.findModel msg.findOne, (err,model) ->
-                if err then return callbackToRes(res)(err)
-                model.render realm, callbackToRes(res)
+                if err then return callbackToQuery(res)(err)
+                model.render realm, callbackToQuery(res)
 
 
         if msg.call and msg.pattern?.constructor is Object
           return @applyPermission @permissions.call, msg, realm, (err,msg) =>
             if err then return res.end err: 'access denied'
             @log 'call', msg, msg.call
-            c.fcall msg.call, msg.args or [], msg.pattern, realm, callbackToRes(res), (err,data) ->
+            c.fcall msg.call, msg.args or [], msg.pattern, realm, callbackToQuery(res), (err,data) ->
               if err?.name then err = err.name
               res.end err: err, data: data
 
@@ -145,7 +140,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000
           return @applyPermission @permissions.update, msg, realm, (err,msg) =>
             if err then return res.end err: 'access denied'
             @log 'update', msg.update, msg.data
-            c.updateModel msg.update, msg.data, realm, callbackToRes(res)
+            c.updateModel msg.update, msg.data, realm, callbackToQuery(res)
 
         if msg.find
           return @applyPermission @permissions.find, msg, realm, (err,msg) =>

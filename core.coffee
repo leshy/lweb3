@@ -9,11 +9,11 @@ startTime = new Date().getTime()
 
 core = exports.core = subscriptionMan.fancy.extend4000
     log: (args...) ->
-        if @verbose then console.log args
-        if @logger then @logger.log.apply @logger, args
+      if @verbose then console.log.apply console, args
+      if @logger then @logger.log.apply @logger, args
 
-    initialize: ->
-        if @get('verbose') then @verobse = true
+    initialize: (options) ->
+        if @get('verbose') or options?.verbose then @verbose = true
         @when 'parent', (@parent) =>
             if @parent.verbose then @verbose = true
             if @parent.logger then @set logger: @parent.logger.child()
@@ -24,7 +24,7 @@ core = exports.core = subscriptionMan.fancy.extend4000
 
     end: ->
         if @ended then return else @ended = true
-        @log 'ending'
+        @log 'ending', {}, 'end'
         @trigger 'end'
 
 protocolHost = exports.protocolHost = core.extend4000

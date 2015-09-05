@@ -13,6 +13,16 @@ query = core.core.extend4000
         @get('unsubscribe')()
         @parent.endQuery @id
 
+queryToCallback = exports.queryToCallback = (callback) ->
+  (msg,end) ->
+    #if not end then throw "this query is supposed to be translated to callback but I got multiple responses"
+    callback msg.err, msg.data
+
+callbackToQuery = exports.callbackToQuery = (res) -> (err,data) ->
+  if err then err = String(err)
+  if err then res.end err: err
+  else res.end data: data
+
 client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     validator:
         timeout: v().Default(3000).Number()
@@ -44,13 +54,15 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
         @parent.send { type: 'query', id: id = helpers.uuid(10), payload: msg }
         @log 'starting query', msg, 'q-' + id
 
-        unsubscribe = @subscribe { type: 'reply', id: id }, (msg) =>
-            if msg.end then unsubscribe()
-            helpers.cbc callback, msg.payload, msg.end
+        q = new query parent: @, id: id
+
+        q.set unsubscribe: unsubscribe = @subscribe { type: 'reply', id: id }, (msg) =>
+          q.trigger 'msg', msg.payload, msg.end
+          if msg.end then unsubscribe(); q.trigger 'end', msg.payload
+          helpers.cbc callback, msg.payload, msg.end
 
         #setTimeout unsubscribe, timeout
-        return new query parent: @, id: id, unsubscribe: unsubscribe
-
+        return q
 
 
 reply = core.core.extend4000
@@ -87,6 +99,7 @@ serverServer = exports.serverServer = core.protocol.extend4000
 
     functions: ->
         onQuery: _.bind @subscribe, @
+        onQueryOnce: _.bind @subscribeOnce, @
 
         onQueryError: (callback) =>
             @on 'error', callback
@@ -97,6 +110,7 @@ serverServer = exports.serverServer = core.protocol.extend4000
             try
                 callback payload, r, realm
             catch error
+                #console.log "ERROR", error, error.stack
                 @trigger "error", payload, r, realm, error, pattern
 
     initialize: ->
