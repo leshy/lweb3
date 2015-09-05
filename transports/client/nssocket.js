@@ -36,11 +36,7 @@
           type: 'tcp4'
         })
       });
-      return _.defer((function(_this) {
-        return function() {
-          return nssocket.connect(_this.get('host'), _this.get('port'));
-        };
-      })(this));
+      return nssocket.connect(this.get('host'), this.get('port'));
     }
   });
 

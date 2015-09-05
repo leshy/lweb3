@@ -35,9 +35,7 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
 
     @when 'parent', (parent) =>
       #parent.on 'end', => @end()
-      console.log 'got parent'
       @nssocket.on [ 'data', 'msg' ], (msg) =>
-        console.log "PARENT EVENT", msg
         parent.event msg, @realm
 
   send: (msg) ->

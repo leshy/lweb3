@@ -61,9 +61,7 @@
       })(this));
       return this.when('parent', (function(_this) {
         return function(parent) {
-          console.log('got parent');
           return _this.nssocket.on(['data', 'msg'], function(msg) {
-            console.log("PARENT EVENT", msg);
             return parent.event(msg, _this.realm);
           });
         };
