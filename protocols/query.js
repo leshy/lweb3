@@ -179,6 +179,7 @@
     functions: function() {
       return {
         onQuery: _.bind(this.subscribe, this),
+        onQueryWait: _.bind(this.subscribeWait, this),
         onQueryOnce: _.bind(this.subscribeOnce, this),
         onQueryError: (function(_this) {
           return function(callback) {

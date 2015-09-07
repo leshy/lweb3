@@ -99,8 +99,8 @@ serverServer = exports.serverServer = core.protocol.extend4000
 
     functions: ->
         onQuery: _.bind @subscribe, @
+        onQueryWait: _.bind @subscribeWait, @
         onQueryOnce: _.bind @subscribeOnce, @
-
         onQueryError: (callback) =>
             @on 'error', callback
 
