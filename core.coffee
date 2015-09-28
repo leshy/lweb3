@@ -9,7 +9,11 @@ startTime = new Date().getTime()
 
 core = exports.core = subscriptionMan.fancy.extend4000
     log: (args...) ->
-      if @verbose then console.log.apply console, args
+      if @verbose
+        msg = args.shift()
+        data = args.shift()
+        tags = args
+        console.log msg, tags.join(','), data
       if @logger then @logger.log.apply @logger, args
 
     initialize: (options) ->

@@ -1,14 +1,45 @@
 {
-  "name": "lweb3",
-  "version": "0.0.0",
-  "description": "lweb3",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "_args": [
+    [
+      "lweb3@git://github.com/leshy/lweb3.git",
+      "/home/lesh/coding/bitcoin/bomber"
+    ]
+  ],
+  "_from": "git://github.com/leshy/lweb3.git",
+  "_id": "lweb3@0.0.0",
+  "_inCache": true,
+  "_location": "/lweb3",
+  "_phantomChildren": {},
+  "_requested": {
+    "hosted": {
+      "directUrl": "https://raw.githubusercontent.com/leshy/lweb3/master/package.json",
+      "gitUrl": "git://github.com/leshy/lweb3.git",
+      "httpsUrl": "git+https://github.com/leshy/lweb3.git",
+      "shortcut": "github:leshy/lweb3",
+      "ssh": "git@github.com:leshy/lweb3.git",
+      "sshUrl": "git+ssh://git@github.com/leshy/lweb3.git",
+      "type": "github"
+    },
+    "name": "lweb3",
+    "raw": "lweb3@git://github.com/leshy/lweb3.git",
+    "rawSpec": "git://github.com/leshy/lweb3.git",
+    "scope": null,
+    "spec": "git://github.com/leshy/lweb3.git",
+    "type": "hosted"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:leshy/lweb3.git"
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git://github.com/leshy/lweb3.git#f79e66814c4912ff3b2819698994315ebc22afc8",
+  "_shasum": "d833e16aa28f80e437b9931fdba5d52cff7aa74d",
+  "_shrinkwrap": null,
+  "_spec": "lweb3@git://github.com/leshy/lweb3.git",
+  "_where": "/home/lesh/coding/bitcoin/bomber",
+  "author": {
+    "name": "lesh"
+  },
+  "bugs": {
+    "url": "https://github.com/leshy/lweb3/issues"
   },
   "dependencies": {
     "backbone4000": "git://github.com/leshy/backbone4000.git",
@@ -20,10 +51,23 @@
     "socket.io-client": "^1.3.5",
     "underscore": "underscore >= 1.4.x"
   },
-  "author": "lesh",
+  "description": "lweb3",
+  "devDependencies": {},
+  "gitHead": "f79e66814c4912ff3b2819698994315ebc22afc8",
+  "homepage": "https://github.com/leshy/lweb3",
+  "installable": true,
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/leshy/lweb3/issues"
+  "main": "index.js",
+  "name": "lweb3",
+  "optionalDependencies": {},
+  "readme": "lweb3\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/leshy/lweb3.git"
   },
-  "homepage": "https://github.com/leshy/lweb3"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.0.0"
 }

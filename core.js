@@ -19,10 +19,13 @@
 
   core = exports.core = subscriptionMan.fancy.extend4000({
     log: function() {
-      var args;
+      var args, data, msg, tags;
       args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
       if (this.verbose) {
-        console.log.apply(console, args);
+        msg = args.shift();
+        data = args.shift();
+        tags = args;
+        console.log(msg, tags.join(','), data);
       }
       if (this.logger) {
         return this.logger.log.apply(this.logger, args);

@@ -36,14 +36,14 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     initialize: ->
         @when 'parent', (parent) =>
             parent.subscribe { type: 'reply', id: String }, (msg) =>
-                if msg.end then @log 'query completed', { payload: msg.payload }, 'q-' + msg.id
-                else @log 'query reply', { payload: msg.payload }, 'q-' + msg.id
+                if msg.end then @log 'Q completed', msg.payload , 'q-' + msg.id
+                else @log 'Q reply', msg.payload, 'q-' + msg.id
 
                 @event msg
             parent.on 'end', => @end()
 
     endQuery: (id) ->
-        @log 'canceling query' + ' ' + id
+        @log 'canceling Q' + ' ' + id
         @parent.send { type: 'queryCancel', id: id }
 
     send: (msg, timeout, callback) ->
@@ -52,7 +52,7 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
             timeout = @get('timeout')
 
         @parent.send { type: 'query', id: id = helpers.uuid(10), payload: msg }
-        @log 'starting query', msg, 'q-' + id
+        @log 'Q starting', msg, 'q-' + id
 
         q = new query parent: @, id: id
 

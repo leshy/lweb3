@@ -68,13 +68,9 @@
             id: String
           }, function(msg) {
             if (msg.end) {
-              _this.log('query completed', {
-                payload: msg.payload
-              }, 'q-' + msg.id);
+              _this.log('Q completed', msg.payload, 'q-' + msg.id);
             } else {
-              _this.log('query reply', {
-                payload: msg.payload
-              }, 'q-' + msg.id);
+              _this.log('Q reply', msg.payload, 'q-' + msg.id);
             }
             return _this.event(msg);
           });
@@ -85,7 +81,7 @@
       })(this));
     },
     endQuery: function(id) {
-      this.log('canceling query' + ' ' + id);
+      this.log('canceling Q' + ' ' + id);
       return this.parent.send({
         type: 'queryCancel',
         id: id
@@ -102,7 +98,7 @@
         id: id = helpers.uuid(10),
         payload: msg
       });
-      this.log('starting query', msg, 'q-' + id);
+      this.log('Q starting', msg, 'q-' + id);
       q = new query({
         parent: this,
         id: id
