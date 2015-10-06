@@ -44,14 +44,14 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000 do
     @query { findOne: pattern }, queryToCallback callback
 
   update: (pattern,data,callback) ->
-    @query { update: pattern, data: data }, queryToCallback callback
+    @query { update: { pattern: pattern, data: data }}, queryToCallback callback
 
   fcall: (name, args, pattern, callback) ->
-    @query { call: name, args: args, pattern: pattern }, queryToCallback callback
+    @query { call: { name: name, args: args, pattern: pattern }}, queryToCallback callback
 
   find: (pattern,limits,callback,callbackDone) ->
-    query = { find: pattern }
-    if limits then query.limits = limits
+    query = { find: { pattern: pattern } }
+    if limits then query.find.limits = limits
 
     @query query, (msg,end) ->
       if end then return helpers.cbc callbackDone, null, end
@@ -67,7 +67,6 @@ client = exports.client = collectionProtocol.extend4000 do
 serverCollection = exports.serverCollection = collectionInterface.extend4000 do
   initialize: ->
     c = @c = @get 'collection'
-    @permissions = {}
 
     @set name: (name =  c.get('name'))
 
@@ -91,97 +90,29 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
       if broadcast.create
         @c.on 'create', (data) ~>
           @parent.parent.channel(name).broadcast action: 'create', create: data
-
-
-    parsePermissions = (permissions) ->
-      if permissions then def = false else def = true
-      
-      keys = { +find, +findOne, +call, +create, +remove }
-
-      h.dictMap keys, (val, key) ->
-        permission = permissions[key]
-        switch x = permission?@@
-          | undefined => def
-          | Boolean   => permission
-          | Object    => h.dictMap permission, (value, key) -> if key isnt 'chew' then v value else value  # instantiate validators
-      
-
-    if not (permissions = @get 'permissions') then console.warn "WARNING: no permissions for collection #{ name }"
-    @permissions = parsePermissions permissions
-
+    
     @when 'parent', (parent) ~>
       parent.parent.onQuery { collection: name }, (msg, res, realm={}) ~>
-
-        if msg.create
-          return @applyPermission @permissions.create, msg, realm, (err,msg) ->
-            if err then return res.end err: 'access denied'
-            c.createModel msg.create, realm, (err,data) ->
-              console.log "CREATEMODEL GOT",err,data
-              console.log "constructor", err?constructor
-              if err?stack? then console.log err.stack
-              callbackToQuery(res)(err, data)
-
-        if msg.remove
-          return @applyPermission @permissions.remove, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
-            @log 'remove', msg.remove
-            c.removeModel msg.remove, realm, callbackToQuery(res)
-
-        if msg.findOne
-          return @applyPermission @permissions.findOne, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
-            @log 'findOne', msg.findOne
-            c.findModel msg.findOne, (err,model) ->
-                if err then return callbackToQuery(res)(err)
-                model.render realm, callbackToQuery(res)
-
-
-        if msg.call and msg.pattern?.constructor is Object
-          return @applyPermission @permissions.call, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
-            @log 'call', msg, msg.call
-            
-            c.fcall msg.call, (msg.args or []), msg.pattern, realm, callbackToQuery(res), (err,data) ->
-              if err?name then err = err.name
-              res.end err: err, data: data
-
-        if msg.update and msg.data
-          return @applyPermission @permissions.update, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
-            @log 'update', msg.update, msg.data
-            c.updateModel msg.update, msg.data, realm, callbackToQuery(res)
-
-        if msg.find
-          return @applyPermission @permissions.find, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
-            bucket = new helpers.parallelBucket()
-            endCb = bucket.cb()
-            @log 'find', msg.find, msg.limits
-            c.findModels msg.find, (msg.limits or {}), ((err,model) ->
-              bucketCallback = bucket.cb()
-              model.render realm, (err,data) ->
-                if not err and not _.isEmpty(data) then res.write data
-                #if model.active then model.gCollect()
-                #
-                bucketCallback()), ((err,data) -> endCb())
-            bucket.done (err,data) -> res.end()
-
-        res.end { err: 'wat' }
+        if msg.create then c.rCreate realm, msg.create, callbackToQuery res
+        if msg.remove then c.rRemove realm, msg.remove, callbackToQuery res
+        if msg.findOne then c.rFindOne realm, msg.findOne, callbackToQuery res
+        if msg.call then c.rCall realm, msg.call, callbackToQuery res
+        if msg.update then c.rUpdate realm, msg.update, callbackToQuery res
+        if msg.find then c.rFind(realm, msg.find,
+          ((err,data) -> res.write data),
+          (-> res.end()))
 
         #@core?.event msg.payload, msg.id, realm
 
-  applyPermission: (permission, msg, realm, cb) ->
-    waterfall = { msg: msg }
-    
+  applyPermission: (permission, msg, realm, cb) ->    
     switch x = permission?@@
-      | undefined => cb "Access Denied"
+      | undefined => cb "Access Denied - No Perm"
       | Boolean   =>
         if permission then cb void, msg
-        else cb "Access Denied"
+        else cb "Access Denied - Forbidden"
       | Object    =>
 
         checkRealm = (realm, cb) ->
-          console.log 'checkrealm'
           if permission.realm? then permission.realm.feed realm, cb
           else _.defer cb
 
@@ -194,27 +125,13 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
           else _.defer -> cb void, msg
           
         checkRealm realm, (err,data) ->
-          if err then return cb "Realm Access Denied"
+          if err then return cb "Access Denied - Realm"
           checkValue msg, (err,msg) ->
-            if err then return cb "Value Access Denied"
+            if err then return cb "Access Denied - Value"
             checkChew msg, realm, (err,msg) ->
-              if err then return cb "Chew Access Denied"
+              if err then return cb "Access Denied - Chew"
               cb void, msg
             
-  applyPermission_: (permissions = [], msg, realm, callback) ->
-    if not permissions.length then return callback "Access Denied"
-
-    async.series _.map(permissions, (permission) ->
-      (callback) ->
-        permission.matchMsg.feed msg, (err,msg) ->
-          if err then return callback null, err
-          if not permission.matchRealm then callback msg
-          else permission.matchRealm.feed realm, (err) ->
-            if err then callback null, err
-            else callback msg),
-      (data,err) ->
-        if data then callback null, data
-        else callback true, data
 
 server = exports.server = collectionProtocol.extend4000 do
   defaults:
@@ -238,3 +155,5 @@ serverServer = exports.serverServer = collectionProtocol.extend4000 do
 
       _.map parent.clients, (client,id) ~>
         client.addProtocol new server verbose: @verbose, core: @
+
+

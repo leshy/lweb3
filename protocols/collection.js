@@ -63,24 +63,30 @@
     },
     update: function(pattern, data, callback){
       return this.query({
-        update: pattern,
-        data: data
+        update: {
+          pattern: pattern,
+          data: data
+        }
       }, queryToCallback(callback));
     },
     fcall: function(name, args, pattern, callback){
       return this.query({
-        call: name,
-        args: args,
-        pattern: pattern
+        call: {
+          name: name,
+          args: args,
+          pattern: pattern
+        }
       }, queryToCallback(callback));
     },
     find: function(pattern, limits, callback, callbackDone){
       var query;
       query = {
-        find: pattern
+        find: {
+          pattern: pattern
+        }
       };
       if (limits) {
-        query.limits = limits;
+        query.find.limits = limits;
       }
       return this.query(query, function(msg, end){
         if (end) {
@@ -99,9 +105,8 @@
   });
   serverCollection = exports.serverCollection = collectionInterface.extend4000({
     initialize: function(){
-      var c, name, broadcast, parsePermissions, permissions, this$ = this;
+      var c, name, broadcast, this$ = this;
       c = this.c = this.get('collection');
-      this.permissions = {};
       this.set({
         name: name = c.get('name')
       });
@@ -144,175 +149,50 @@
           });
         }
       }
-      parsePermissions = function(permissions){
-        var def, keys;
-        if (permissions) {
-          def = false;
-        } else {
-          def = true;
-        }
-        keys = {
-          find: true,
-          findOne: true,
-          call: true,
-          create: true,
-          remove: true
-        };
-        return h.dictMap(keys, function(val, key){
-          var permission, x;
-          permission = permissions[key];
-          switch (x = permission != null ? permission.constructor : void 8) {
-          case undefined:
-            return def;
-          case Boolean:
-            return permission;
-          case Object:
-            return h.dictMap(permission, function(value, key){
-              if (key !== 'chew') {
-                return v(value);
-              } else {
-                return value;
-              }
-            });
-          }
-        });
-      };
-      if (!(permissions = this.get('permissions'))) {
-        console.warn("WARNING: no permissions for collection " + name);
-      }
-      this.permissions = parsePermissions(permissions);
       return this.when('parent', function(parent){
         return parent.parent.onQuery({
           collection: name
         }, function(msg, res, realm){
-          var ref$;
           realm == null && (realm = {});
           if (msg.create) {
-            return this$.applyPermission(this$.permissions.create, msg, realm, function(err, msg){
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              return c.createModel(msg.create, realm, function(err, data){
-                console.log("CREATEMODEL GOT", err, data);
-                console.log("constructor", err != null ? err.constructor : void 8);
-                if ((err != null ? err.stack : void 8) != null) {
-                  console.log(err.stack);
-                }
-                return callbackToQuery(res)(err, data);
-              });
-            });
+            c.rCreate(realm, msg.create, callbackToQuery(res));
           }
           if (msg.remove) {
-            return this$.applyPermission(this$.permissions.remove, msg, realm, function(err, msg){
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              this$.log('remove', msg.remove);
-              return c.removeModel(msg.remove, realm, callbackToQuery(res));
-            });
+            c.rRemove(realm, msg.remove, callbackToQuery(res));
           }
           if (msg.findOne) {
-            return this$.applyPermission(this$.permissions.findOne, msg, realm, function(err, msg){
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              this$.log('findOne', msg.findOne);
-              return c.findModel(msg.findOne, function(err, model){
-                if (err) {
-                  return callbackToQuery(res)(err);
-                }
-                return model.render(realm, callbackToQuery(res));
-              });
-            });
+            c.rFindOne(realm, msg.findOne, callbackToQuery(res));
           }
-          if (msg.call && ((ref$ = msg.pattern) != null ? ref$.constructor : void 8) === Object) {
-            return this$.applyPermission(this$.permissions.call, msg, realm, function(err, msg){
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              this$.log('call', msg, msg.call);
-              return c.fcall(msg.call, msg.args || [], msg.pattern, realm, callbackToQuery(res), function(err, data){
-                if (err != null && err.name) {
-                  err = err.name;
-                }
-                return res.end({
-                  err: err,
-                  data: data
-                });
-              });
-            });
+          if (msg.call) {
+            c.rCall(realm, msg.call, callbackToQuery(res));
           }
-          if (msg.update && msg.data) {
-            return this$.applyPermission(this$.permissions.update, msg, realm, function(err, msg){
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              this$.log('update', msg.update, msg.data);
-              return c.updateModel(msg.update, msg.data, realm, callbackToQuery(res));
-            });
+          if (msg.update) {
+            c.rUpdate(realm, msg.update, callbackToQuery(res));
           }
           if (msg.find) {
-            return this$.applyPermission(this$.permissions.find, msg, realm, function(err, msg){
-              var bucket, endCb;
-              if (err) {
-                return res.end({
-                  err: 'access denied'
-                });
-              }
-              bucket = new helpers.parallelBucket();
-              endCb = bucket.cb();
-              this$.log('find', msg.find, msg.limits);
-              c.findModels(msg.find, msg.limits || {}, function(err, model){
-                var bucketCallback;
-                bucketCallback = bucket.cb();
-                return model.render(realm, function(err, data){
-                  if (!err && !_.isEmpty(data)) {
-                    res.write(data);
-                  }
-                  return bucketCallback();
-                });
-              }, function(err, data){
-                return endCb();
-              });
-              return bucket.done(function(err, data){
-                return res.end();
-              });
+            return c.rFind(realm, msg.find, function(err, data){
+              return res.write(data);
+            }, function(){
+              return res.end();
             });
           }
-          return res.end({
-            err: 'wat'
-          });
         });
       });
     },
     applyPermission: function(permission, msg, realm, cb){
-      var waterfall, x, checkRealm, checkValue, checkChew;
-      waterfall = {
-        msg: msg
-      };
+      var x, checkRealm, checkValue, checkChew;
       switch (x = permission != null ? permission.constructor : void 8) {
       case undefined:
-        return cb("Access Denied");
+        return cb("Access Denied - No Perm");
       case Boolean:
         if (permission) {
           return cb(void 8, msg);
         } else {
-          return cb("Access Denied");
+          return cb("Access Denied - Forbidden");
         }
         break;
       case Object:
         checkRealm = function(realm, cb){
-          console.log('checkrealm');
           if (permission.realm != null) {
             return permission.realm.feed(realm, cb);
           } else {
@@ -339,53 +219,21 @@
         };
         return checkRealm(realm, function(err, data){
           if (err) {
-            return cb("Realm Access Denied");
+            return cb("Access Denied - Realm");
           }
           return checkValue(msg, function(err, msg){
             if (err) {
-              return cb("Value Access Denied");
+              return cb("Access Denied - Value");
             }
             return checkChew(msg, realm, function(err, msg){
               if (err) {
-                return cb("Chew Access Denied");
+                return cb("Access Denied - Chew");
               }
               return cb(void 8, msg);
             });
           });
         });
       }
-    },
-    applyPermission_: function(permissions, msg, realm, callback){
-      permissions == null && (permissions = []);
-      if (!permissions.length) {
-        return callback("Access Denied");
-      }
-      return async.series(_.map(permissions, function(permission){
-        return function(callback){
-          return permission.matchMsg.feed(msg, function(err, msg){
-            if (err) {
-              return callback(null, err);
-            }
-            if (!permission.matchRealm) {
-              return callback(msg);
-            } else {
-              return permission.matchRealm.feed(realm, function(err){
-                if (err) {
-                  return callback(null, err);
-                } else {
-                  return callback(msg);
-                }
-              });
-            }
-          });
-        };
-      }), function(data, err){
-        if (data) {
-          return callback(null, data);
-        } else {
-          return callback(true, data);
-        }
-      });
     }
   });
   server = exports.server = collectionProtocol.extend4000({
