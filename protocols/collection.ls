@@ -85,7 +85,6 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
       if broadcast.remove
         @c.on 'remove', (data) ~> # should get POST REMOVE data from event, so that it can transmit ids
           if id = data.id
-            #@parent.parent.channel(name).broadcast action: 'remove', remove: id
             @parent.parent.channel(name + ":" + id).broadcast action: 'remove'
 
       if broadcast.create
@@ -96,7 +95,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
     parsePermissions = (permissions) ->
       if permissions then def = false else def = true
       
-      keys = { +find, +findOne, +call, +create, +remove }
+      keys = { +find, +findOne, +call, +create, +remove, +update }
 
       h.dictMap keys, (val, key) ->
         permission = permissions[key]
@@ -114,22 +113,20 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
 
         if msg.create
           return @applyPermission @permissions.create, msg, realm, (err,msg) ->
-            if err then return res.end err: 'access denied'
+            if err then return res.end err: 'access denied to collection: ' + err
             c.createModel msg.create, realm, (err,data) ->
-              console.log "CREATEMODEL GOT",err,data
-              console.log "constructor", err?constructor
               if err?stack? then console.log err.stack
               callbackToQuery(res)(err, data)
 
         if msg.remove
           return @applyPermission @permissions.remove, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
+            if err then return res.end err: 'access denied to collection: ' + err
             @log 'remove', msg.remove
             c.removeModel msg.remove, realm, callbackToQuery(res)
 
         if msg.findOne
           return @applyPermission @permissions.findOne, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
+            if err then return res.end err: 'access denied to collection: ' + err
             @log 'findOne', msg.findOne
             c.findModel msg.findOne, (err,model) ->
                 if err then return callbackToQuery(res)(err)
@@ -138,7 +135,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
 
         if msg.call and msg.pattern?.constructor is Object
           return @applyPermission @permissions.call, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
+            if err then return res.end err: 'access denied to collection: ' + err
             @log 'call', msg, msg.call
             
             c.fcall msg.call, (msg.args or []), msg.pattern, realm, callbackToQuery(res), (err,data) ->
@@ -147,13 +144,16 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
 
         if msg.update and msg.data
           return @applyPermission @permissions.update, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
+            if err
+              #@log 'update access denied ' + err, msg, 'accessdenied', 'find'
+              return res.end err: 'access denied to collection: ' + err
             @log 'update', msg.update, msg.data
             c.updateModel msg.update, msg.data, realm, callbackToQuery(res)
 
         if msg.find
           return @applyPermission @permissions.find, msg, realm, (err,msg) ~>
-            if err then return res.end err: 'access denied'
+            if err
+              return res.end err: 'access denied to collection: ' + err
             bucket = new helpers.parallelBucket()
             endCb = bucket.cb()
             @log 'find', msg.find, msg.limits
@@ -174,10 +174,10 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
     waterfall = { msg: msg }
     
     switch x = permission?@@
-      | undefined => cb "Access Denied"
+      | undefined => cb "No permission"
       | Boolean   =>
         if permission then cb void, msg
-        else cb "Access Denied"
+        else cb "Explicitly Forbidden"
       | Object    =>
 
         checkRealm = (realm, cb) ->

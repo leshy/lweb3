@@ -156,7 +156,8 @@
           findOne: true,
           call: true,
           create: true,
-          remove: true
+          remove: true,
+          update: true
         };
         return h.dictMap(keys, function(val, key){
           var permission, x;
@@ -191,12 +192,10 @@
             return this$.applyPermission(this$.permissions.create, msg, realm, function(err, msg){
               if (err) {
                 return res.end({
-                  err: 'access denied'
+                  err: 'access denied to collection: ' + err
                 });
               }
               return c.createModel(msg.create, realm, function(err, data){
-                console.log("CREATEMODEL GOT", err, data);
-                console.log("constructor", err != null ? err.constructor : void 8);
                 if ((err != null ? err.stack : void 8) != null) {
                   console.log(err.stack);
                 }
@@ -208,7 +207,7 @@
             return this$.applyPermission(this$.permissions.remove, msg, realm, function(err, msg){
               if (err) {
                 return res.end({
-                  err: 'access denied'
+                  err: 'access denied to collection: ' + err
                 });
               }
               this$.log('remove', msg.remove);
@@ -219,7 +218,7 @@
             return this$.applyPermission(this$.permissions.findOne, msg, realm, function(err, msg){
               if (err) {
                 return res.end({
-                  err: 'access denied'
+                  err: 'access denied to collection: ' + err
                 });
               }
               this$.log('findOne', msg.findOne);
@@ -235,7 +234,7 @@
             return this$.applyPermission(this$.permissions.call, msg, realm, function(err, msg){
               if (err) {
                 return res.end({
-                  err: 'access denied'
+                  err: 'access denied to collection: ' + err
                 });
               }
               this$.log('call', msg, msg.call);
@@ -254,7 +253,7 @@
             return this$.applyPermission(this$.permissions.update, msg, realm, function(err, msg){
               if (err) {
                 return res.end({
-                  err: 'access denied'
+                  err: 'access denied to collection: ' + err
                 });
               }
               this$.log('update', msg.update, msg.data);
@@ -266,7 +265,7 @@
               var bucket, endCb;
               if (err) {
                 return res.end({
-                  err: 'access denied'
+                  err: 'access denied to collection: ' + err
                 });
               }
               bucket = new helpers.parallelBucket();
@@ -302,12 +301,12 @@
       };
       switch (x = permission != null ? permission.constructor : void 8) {
       case undefined:
-        return cb("Access Denied");
+        return cb("No permission");
       case Boolean:
         if (permission) {
           return cb(void 8, msg);
         } else {
-          return cb("Access Denied");
+          return cb("Explicitly Forbidden");
         }
         break;
       case Object:
