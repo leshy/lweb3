@@ -154,6 +154,7 @@
         this.ended = true;
       } else {
         console.error("this reply has ended");
+        console.error(new Error().stack);
         return;
       }
       this.unsubscribe();

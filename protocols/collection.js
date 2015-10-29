@@ -195,11 +195,14 @@
                   err: 'access denied to collection: ' + err
                 });
               }
-              return c.createModel(msg.create, realm, function(err, data){
+              return c.createModel(msg.create, realm, function(err, model){
                 if ((err != null ? err.stack : void 8) != null) {
                   console.log(err.stack);
                 }
-                return callbackToQuery(res)(err, data);
+                if (err) {
+                  return callbackToQuery(res)(err);
+                }
+                return model.render(realm, callbackToQuery(res));
               });
             });
           }

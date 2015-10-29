@@ -32,7 +32,7 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000 do
   query: (msg,callback) ->
     msg.collection = @get 'name'
     @parent.parent.query msg, callback
-
+    
   create: (data,callback) ->
     delete data._t
     @query { create: data }, queryToCallback callback
@@ -114,9 +114,10 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
         if msg.create
           return @applyPermission @permissions.create, msg, realm, (err,msg) ->
             if err then return res.end err: 'access denied to collection: ' + err
-            c.createModel msg.create, realm, (err,data) ->
-              if err?stack? then console.log err.stack
-              callbackToQuery(res)(err, data)
+            c.createModel msg.create, realm, (err,model) ->
+              if err?stack? then console.log err.stack;
+              if err then return callbackToQuery(res)(err)
+              model.render realm, callbackToQuery(res)
 
         if msg.remove
           return @applyPermission @permissions.remove, msg, realm, (err,msg) ~>
