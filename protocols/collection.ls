@@ -26,6 +26,7 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000 do
       @parent.parent.channel(@get('name')).join (msg) ~> @event msg
 
   subscribeModel: (id,callback) ->
+    console.log "SUBSCRIBEMODEL", @get('name'), id
     @parent.parent.channel(@get('name') + ":" + id).join (msg) -> callback msg
     return ~> @parent.parent.channel(@get('name') + ":" + id).part()
 
@@ -104,7 +105,6 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
           | Boolean   => permission
           | Object    => h.dictMap permission, (value, key) -> if key isnt 'chew' then v value else value  # instantiate validators
       
-
     if not (permissions = @get 'permissions') then console.warn "WARNING: no permissions for collection #{ name }"
     @permissions = parsePermissions permissions
 
@@ -112,13 +112,16 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
       parent.parent.onQuery { collection: name }, (msg, res, realm={}) ~>
 
         if msg.create
-          return @applyPermission @permissions.create, msg, realm, (err,msg) ->
+          return @applyPermission @permissions.create, { create: msg.create, postCreate: {} }, realm, (err, msg) ->
             if err then return res.end err: 'access denied to collection: ' + err
-            c.createModel msg.create, realm, (err,model) ->
-              if err?stack? then console.log err.stack;
-              if err then return callbackToQuery(res)(err)
-              model.render realm, callbackToQuery(res)
+            modelClass = c.resolveModel msg.create
+            newModel = new modelClass()
 
+            newModel.update msg.create, realm, (err,data) ~>
+              if err then return callbackToQuery(res)(err)
+              newModel.set msg.postCreate
+              newModel.flush callbackToQuery(res)
+            
         if msg.remove
           return @applyPermission @permissions.remove, msg, realm, (err,msg) ~>
             if err then return res.end err: 'access denied to collection: ' + err
@@ -149,7 +152,20 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
               #@log 'update access denied ' + err, msg, 'accessdenied', 'find'
               return res.end err: 'access denied to collection: ' + err
             @log 'update', msg.update, msg.data
-            c.updateModel msg.update, msg.data, realm, callbackToQuery(res)
+            
+#            c.updateModel msg.update, msg.data, realm, callbackToQuery(res)
+
+            queue = new helpers.queue size: 3
+
+            c.findModels msg.update, {}, ((err,model) ->
+              queue.push model.id, (callback) ->
+                model.update msg.data, realm, (err,data) ~>
+                  if err then return callback err, data
+                  model.flush (err,fdata) ->
+                    if not _.keys(data).length then data = undefined
+                    callback err,data),
+              -> queue.done callbackToQuery(res)
+
 
         if msg.find
           return @applyPermission @permissions.find, msg, realm, (err,msg) ~>
@@ -182,7 +198,6 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
       | Object    =>
 
         checkRealm = (realm, cb) ->
-          console.log 'checkrealm'
           if permission.realm? then permission.realm.feed realm, cb
           else _.defer cb
 
@@ -204,7 +219,6 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
             
   applyPermission_: (permissions = [], msg, realm, callback) ->
     if not permissions.length then return callback "Access Denied"
-
     async.series _.map(permissions, (permission) ->
       (callback) ->
         permission.matchMsg.feed msg, (err,msg) ->
@@ -221,9 +235,7 @@ server = exports.server = collectionProtocol.extend4000 do
   defaults:
     name: 'collectionServer'
     collectionClass: serverCollection
-
   requires: [ channel.server ]
-
 
 serverServer = exports.serverServer = collectionProtocol.extend4000 do
   defaults:

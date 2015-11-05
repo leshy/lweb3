@@ -34,6 +34,7 @@
     },
     subscribeModel: function(id, callback){
       var this$ = this;
+      console.log("SUBSCRIBEMODEL", this.get('name'), id);
       this.parent.parent.channel(this.get('name') + ":" + id).join(function(msg){
         return callback(msg);
       });
@@ -189,20 +190,24 @@
           var ref$;
           realm == null && (realm = {});
           if (msg.create) {
-            return this$.applyPermission(this$.permissions.create, msg, realm, function(err, msg){
+            return this$.applyPermission(this$.permissions.create, {
+              create: msg.create,
+              postCreate: {}
+            }, realm, function(err, msg){
+              var modelClass, newModel, this$ = this;
               if (err) {
                 return res.end({
                   err: 'access denied to collection: ' + err
                 });
               }
-              return c.createModel(msg.create, realm, function(err, model){
-                if ((err != null ? err.stack : void 8) != null) {
-                  console.log(err.stack);
-                }
+              modelClass = c.resolveModel(msg.create);
+              newModel = new modelClass();
+              return newModel.update(msg.create, realm, function(err, data){
                 if (err) {
                   return callbackToQuery(res)(err);
                 }
-                return model.render(realm, callbackToQuery(res));
+                newModel.set(msg.postCreate);
+                return newModel.flush(callbackToQuery(res));
               });
             });
           }
@@ -254,13 +259,35 @@
           }
           if (msg.update && msg.data) {
             return this$.applyPermission(this$.permissions.update, msg, realm, function(err, msg){
+              var queue;
               if (err) {
                 return res.end({
                   err: 'access denied to collection: ' + err
                 });
               }
               this$.log('update', msg.update, msg.data);
-              return c.updateModel(msg.update, msg.data, realm, callbackToQuery(res));
+              queue = new helpers.queue({
+                size: 3
+              });
+              return c.findModels(msg.update, {}, function(err, model){
+                return queue.push(model.id, function(callback){
+                  var this$ = this;
+                  return model.update(msg.data, realm, function(err, data){
+                    if (err) {
+                      return callback(err, data);
+                    }
+                    return model.flush(function(err, fdata){
+                      var data;
+                      if (!_.keys(data).length) {
+                        data = undefined;
+                      }
+                      return callback(err, data);
+                    });
+                  });
+                });
+              }, function(){
+                return queue.done(callbackToQuery(res));
+              });
             });
           }
           if (msg.find) {
@@ -314,7 +341,6 @@
         break;
       case Object:
         checkRealm = function(realm, cb){
-          console.log('checkrealm');
           if (permission.realm != null) {
             return permission.realm.feed(realm, cb);
           } else {
