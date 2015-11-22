@@ -26,7 +26,6 @@ clientCollection = exports.clientCollection = collectionInterface.extend4000 do
       @parent.parent.channel(@get('name')).join (msg) ~> @event msg
 
   subscribeModel: (id,callback) ->
-    console.log "SUBSCRIBEMODEL", @get('name'), id
     @parent.parent.channel(@get('name') + ":" + id).join (msg) -> callback msg
     return ~> @parent.parent.channel(@get('name') + ":" + id).part()
 

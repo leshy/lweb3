@@ -16,6 +16,7 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
         @when 'engineIo', (@engineIo) =>
             if id = @engineIo.id then @set name: 'eio-' + id
             @engineIo.on 'message', (msg) =>
+                console.log 'engineio', @engineIo.request.socket.remoteAddress, msg
                 msg = JSON.parse(msg)
                 @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
                 @event msg, @realm

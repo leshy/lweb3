@@ -34,7 +34,6 @@
     },
     subscribeModel: function(id, callback){
       var this$ = this;
-      console.log("SUBSCRIBEMODEL", this.get('name'), id);
       this.parent.parent.channel(this.get('name') + ":" + id).join(function(msg){
         return callback(msg);
       });
