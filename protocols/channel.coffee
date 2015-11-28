@@ -112,7 +112,7 @@ serverServer = exports.serverServer = channelInterface.extend4000
     initialize: ->
         @when 'parent', (parent) =>
             parent.on 'connect', (client) =>
-                client.addProtocol new server verbose: @verbose, core: @
+                client.addProtocol new server verbose: @verbose, core: @, logger: @logger
 
             _.map parent.clients, (client,id) =>
-                client.addProtocol new server verbose: @verbose, core: @
+                client.addProtocol new server verbose: @verbose, core: @, logger: @logger

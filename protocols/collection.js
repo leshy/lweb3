@@ -434,13 +434,15 @@
         parent.on('connect', function(client){
           return client.addProtocol(new server({
             verbose: this$.verbose,
-            core: this$
+            core: this$,
+            logger: this$.logger
           }));
         });
         return _.map(parent.clients, function(client, id){
           return client.addProtocol(new server({
             verbose: this$.verbose,
-            core: this$
+            core: this$,
+            logger: this$.logger
           }));
         });
       });

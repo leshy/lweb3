@@ -16,23 +16,25 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
         http: 'Instance'
 
     defaults:
-        name: 'engineIoServer'
+        name: 'EIOServer'
 
     defaultChannelClass: exports.engineIoChannel
 
     initialize: ->
         @http = @get 'http'
+
         @engineIo = engineio.attach @http
 
         @engineIo.on 'connection', (engineIoClient) =>
-            @log 'connection received to ' + name = engineIoClient.id, { ip: ip = engineIoClient.request.socket.remoteAddress, headers: engineIoClient.request.headers }
-
-            channel = new @channelClass parent: @, engineIo: engineIoClient, name: name
+            channel = new @channelClass parent: @, engineIo: engineIoClient, logger: @logger
+            name = channel.name()
+            channel.log 'Connection Received', { headers: engineIoClient.request.headers }
 
             channel.on 'change:name', (model,newname) =>
                 delete @clients[name]
                 @clients[newname] = model
                 @trigger 'connect:' + newname, model
+
             @clients[name] = channel
 
             @trigger 'connect:' + name, channel

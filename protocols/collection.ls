@@ -246,7 +246,7 @@ serverServer = exports.serverServer = collectionProtocol.extend4000 do
   initialize: ->
     @when 'parent', (parent) ~>
       parent.on 'connect', (client) ~>
-        client.addProtocol new server verbose: @verbose, core: @
+        client.addProtocol new server verbose: @verbose, core: @, logger: @logger
 
       _.map parent.clients, (client,id) ~>
-        client.addProtocol new server verbose: @verbose, core: @
+        client.addProtocol new server verbose: @verbose, core: @, logger: @logger

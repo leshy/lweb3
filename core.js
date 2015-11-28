@@ -32,8 +32,14 @@
       }
     },
     initialize: function(options) {
-      if (this.get('verbose') || (options != null ? options.verbose : void 0)) {
+      var logger;
+      _.extend(this, options);
+      this.set(options);
+      if (this.get('verbose')) {
         this.verbose = true;
+      }
+      if (logger = this.get('logger')) {
+        this.logger = logger;
       }
       return this.when('parent', (function(_this) {
         return function(parent1) {
@@ -41,9 +47,9 @@
           if (_this.parent.verbose) {
             _this.verbose = true;
           }
-          if (_this.parent.logger) {
-            return _this.set({
-              logger: _this.parent.logger.child()
+          if (_this.logger !== false && _this.parent.logger) {
+            return _this.logger = _this.parent.logger.child({
+              tags: _this.get('name') || 'unnamed'
             });
           }
         };
@@ -76,7 +82,7 @@
         return function(parent) {
           if (parent.logger) {
             return _this.set({
-              logger: parent.logger.child()
+              logger: parent.logger
             });
           }
         };

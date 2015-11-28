@@ -17,10 +17,15 @@ core = exports.core = subscriptionMan.fancy.extend4000
       if @logger then @logger.log.apply @logger, args
 
     initialize: (options) ->
-        if @get('verbose') or options?.verbose then @verbose = true
+        _.extend @, options
+        @set options
+
+        if @get('verbose') then @verbose = true
+        if logger = @get('logger') then @logger = logger
+
         @when 'parent', (@parent) =>
             if @parent.verbose then @verbose = true
-            if @parent.logger then @set logger: @parent.logger.child()
+            if @logger isnt false and @parent.logger then @logger = @parent.logger.child( tags: (@get('name') or 'unnamed'))
 
     name: ->
         if @parent then @parent.name() + "-" + @get('name')
@@ -34,7 +39,7 @@ core = exports.core = subscriptionMan.fancy.extend4000
 protocolHost = exports.protocolHost = core.extend4000
     initialize: (options={}) ->
         @when 'parent', (parent) =>
-            if parent.logger then @set logger: parent.logger.child()
+            if parent.logger then @set logger: parent.logger
 
         @when 'logger', (logger) =>
             @logger = logger

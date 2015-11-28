@@ -22,36 +22,41 @@
     defaults: {
       name: 'engineIo'
     },
+    ip: function() {
+      var ip, request;
+      request = this.engineIo.request;
+      ip = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+      return _.last(ip.split(":"));
+    },
     initialize: function() {
-      return this.when('engineIo', (function(_this) {
-        return function(engineIo) {
-          var id;
-          _this.engineIo = engineIo;
-          if (id = _this.engineIo.id) {
-            _this.set({
-              name: 'eio-' + id
-            });
-          }
-          _this.engineIo.on('message', function(msg) {
-            msg = JSON.parse(msg);
-            _this.log('< ' + util.inspect(msg, {
-              depth: 0
-            }), msg, 'in');
-            _this.event(msg, _this.realm);
-            return _this.trigger('msg', msg);
-          });
-          _this.engineIo.on('close', function() {
-            _this.trigger('disconnect');
-            _this.log("Lost Connection");
+      this.engineIo = this.get('engineIo');
+      this.set({
+        name: 'ip-' + this.ip()
+      });
+      this.engineIo.on('message', (function(_this) {
+        return function(msg) {
+          msg = JSON.parse(msg);
+          _this.log('< ' + util.inspect(msg, {
+            depth: 0
+          }), msg, 'in');
+          _this.event(msg, _this.realm);
+          return _this.trigger('msg', msg);
+        };
+      })(this));
+      this.engineIo.once('close', (function(_this) {
+        return function() {
+          _this.trigger('disconnect');
+          _this.log("Lost Connection");
+          return _this.end();
+        };
+      })(this));
+      return this.when('parent', (function(_this) {
+        return function(parent) {
+          parent.on('end', function() {
             return _this.end();
           });
-          return _this.when('parent', function(parent) {
-            parent.on('end', function() {
-              return _this.end();
-            });
-            return _this.on('msg', function(msg) {
-              return parent.event(msg, _this.realm);
-            });
+          return _this.on('msg', function(msg) {
+            return parent.event(msg, _this.realm);
           });
         };
       })(this));

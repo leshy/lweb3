@@ -25,7 +25,7 @@
       http: 'Instance'
     },
     defaults: {
-      name: 'engineIoServer'
+      name: 'EIOServer'
     },
     defaultChannelClass: exports.engineIoChannel,
     initialize: function() {
@@ -33,15 +33,15 @@
       this.engineIo = engineio.attach(this.http);
       return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
-          var channel, ip, name;
-          _this.log('connection received to ' + (name = engineIoClient.id), {
-            ip: ip = engineIoClient.request.socket.remoteAddress,
-            headers: engineIoClient.request.headers
-          });
+          var channel, name;
           channel = new _this.channelClass({
             parent: _this,
             engineIo: engineIoClient,
-            name: name
+            logger: _this.logger
+          });
+          name = channel.name();
+          channel.log('Connection Received', {
+            headers: engineIoClient.request.headers
           });
           channel.on('change:name', function(model, newname) {
             delete _this.clients[name];

@@ -18,9 +18,6 @@ engineIoClient = exports.engineIoClient = exports.engineIoChannel.extend4000
         #@engineIo.binaryType = 'blob'
         @engineIo.on 'open', => @trigger 'connect'
 
-#    ip: ->
-#      @engineIo.request.headers['x-real-ip'] or @engineIo.request.headers['x-forwarded-for']
-
     end: ->
         if @ended then return
         @ended = true

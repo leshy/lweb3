@@ -12,24 +12,29 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
     defaults:
         name: 'engineIo'
 
+    ip: ->
+      request = @engineIo.request
+      ip = request.headers['x-real-ip'] or request.headers['x-forwarded-for'] or request.connection.remoteAddress
+      _.last ip.split(":") # get rid of pesky ipv6. what is ipv6? I don't know.
 
     initialize: ->
-        @when 'engineIo', (@engineIo) =>
-            if id = @engineIo.id then @set name: 'eio-' + id
-            @engineIo.on 'message', (msg) =>
-                msg = JSON.parse(msg)
-                @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
-                @event msg, @realm
-                @trigger 'msg', msg
+        @engineIo = @get 'engineIo'
+        @set name: 'ip-' + @ip()
 
-            @engineIo.on 'close', =>
-                @trigger 'disconnect'
-                @log "Lost Connection"
-                @end()
+        @engineIo.on 'message', (msg) =>
+            msg = JSON.parse(msg)
+            @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
+            @event msg, @realm
+            @trigger 'msg', msg
 
-            @when 'parent', (parent) =>
-                parent.on 'end', => @end()
-                @on 'msg', (msg) => parent.event msg, @realm
+        @engineIo.once 'close', =>
+            @trigger 'disconnect'
+            @log "Lost Connection"
+            @end()
+
+        @when 'parent', (parent) =>
+            parent.on 'end', => @end()
+            @on 'msg', (msg) => parent.event msg, @realm
 
     send: (msg) ->
         @log "> " + util.inspect(msg,depth: 0), msg, "out"
