@@ -23,6 +23,7 @@ callbackToQuery = exports.callbackToQuery = (res) -> (err,data) ->
   if err then res.end err: err
   else res.end data: data
 
+
 client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     validator:
         timeout: v().Default(3000).Number()

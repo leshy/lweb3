@@ -33,7 +33,6 @@
             });
           }
           _this.engineIo.on('message', function(msg) {
-            console.log('engineio', _this.engineIo.request.socket.remoteAddress, msg);
             msg = JSON.parse(msg);
             _this.log('< ' + util.inspect(msg, {
               depth: 0
