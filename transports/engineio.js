@@ -22,32 +22,21 @@
     defaults: {
       name: 'engineIo'
     },
-    ip: function() {
-      var ip, request;
-      request = this.engineIo.request;
-      ip = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-      return _.last(ip.split(":"));
-    },
     initialize: function() {
-      this.engineIo = this.get('engineIo');
-      this.set({
-        name: 'ip-' + this.ip()
-      });
-      this.engineIo.on('message', (function(_this) {
-        return function(msg) {
-          msg = JSON.parse(msg);
-          _this.log('< ' + util.inspect(msg, {
-            depth: 0
-          }), msg, 'in');
-          _this.event(msg, _this.realm);
-          return _this.trigger('msg', msg);
-        };
-      })(this));
-      this.engineIo.once('close', (function(_this) {
-        return function() {
-          _this.trigger('disconnect');
-          _this.log("Lost Connection");
-          return _this.end();
+      this.when('engineIo', (function(_this) {
+        return function(engineIo) {
+          _this.engineIo = engineIo;
+          _this.engineIo.on('message', function(msg) {
+            msg = JSON.parse(msg);
+            _this.log('< ' + JSON.stringify(msg), msg, 'in');
+            _this.event(msg, _this.realm);
+            return _this.trigger('msg', msg);
+          });
+          return _this.engineIo.once('close', function() {
+            _this.trigger('disconnect');
+            _this.log("Lost Connection");
+            return _this.end();
+          });
         };
       })(this));
       return this.when('parent', (function(_this) {
@@ -62,9 +51,6 @@
       })(this));
     },
     send: function(msg) {
-      this.log("> " + util.inspect(msg, {
-        depth: 0
-      }), msg, "out");
       return this.engineIo.send(JSON.stringify(msg));
     }
   });

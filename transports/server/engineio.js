@@ -27,7 +27,23 @@
     defaults: {
       name: 'EIOServer'
     },
-    defaultChannelClass: exports.engineIoChannel,
+    defaultChannelClass: exports.engineIoChannel.extend4000({
+      initialize: function() {
+        return this.when('engineIo', (function(_this) {
+          return function() {
+            return _this.set({
+              name: 'ip-' + _this.ip()
+            });
+          };
+        })(this));
+      },
+      ip: function() {
+        var ip, request;
+        request = this.engineIo.request;
+        ip = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+        return _.last(ip.split(":"));
+      }
+    }),
     initialize: function() {
       this.http = this.get('http');
       this.engineIo = engineio.attach(this.http);

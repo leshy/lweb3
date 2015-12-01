@@ -18,7 +18,16 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
     defaults:
         name: 'EIOServer'
 
-    defaultChannelClass: exports.engineIoChannel
+    defaultChannelClass: exports.engineIoChannel.extend4000
+      initialize: ->
+        @when 'engineIo', =>
+          @set name: 'ip-' + @ip()
+
+      ip: ->
+        request = @engineIo.request
+
+        ip = request.headers['x-real-ip'] or request.headers['x-forwarded-for'] or request.connection.remoteAddress
+        _.last ip.split(":") # get rid of pesky ipv6. what is ipv6? I don't know.
 
     initialize: ->
         @http = @get 'http'
