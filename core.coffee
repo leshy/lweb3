@@ -31,6 +31,7 @@ core = exports.core = subscriptionMan.fancy.extend4000
 
         @when 'logger', (logger) =>
             @logger = logger
+            if not logger then return
             logger.addTags oldName = (@get('name') or "unnamed")
             @on 'change:name', (self,name) ->
                 logger.delTags oldName

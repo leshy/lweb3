@@ -117,10 +117,10 @@ serverServer = exports.serverServer = core.protocol.extend4000
     initialize: ->
         @when 'parent', (parent) =>
             parent.on 'connect', (client) =>
-                client.addProtocol new server verbose: @verbose, core: @, logger: @logger
+                client.addProtocol new server verbose: @verbose, core: @
 
             _.map parent.clients, (client,id) =>
-                client.addProtocol new server verbose: @verbose, core: @, logger: @logger
+                client.addProtocol new server verbose: @verbose, core: @
 
     channel: (channel) ->
         channel.addProtocol new server verbose: @get 'verbose'

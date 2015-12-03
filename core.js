@@ -56,6 +56,9 @@
         return function(logger) {
           var oldName;
           _this.logger = logger;
+          if (!logger) {
+            return;
+          }
           logger.addTags(oldName = _this.get('name') || "unnamed");
           return _this.on('change:name', function(self, name) {
             logger.delTags(oldName);

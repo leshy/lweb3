@@ -209,15 +209,13 @@
           parent.on('connect', function(client) {
             return client.addProtocol(new server({
               verbose: _this.verbose,
-              core: _this,
-              logger: _this.logger
+              core: _this
             }));
           });
           return _.map(parent.clients, function(client, id) {
             return client.addProtocol(new server({
               verbose: _this.verbose,
-              core: _this,
-              logger: _this.logger
+              core: _this
             }));
           });
         };
