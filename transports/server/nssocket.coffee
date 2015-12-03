@@ -22,25 +22,11 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
 
     initialize: ->
         port = @get 'port'
-        idcounter = 0
 
         @nssocket = nssocket.createServer (clientSocket) =>
-            name = ++idcounter
-            @log 'connection received ' + idcounter
-            channel = new @channelClass parent: @, nssocket: clientSocket, name: name
-
-            channel.on 'change:name', (model,newname) =>
-                delete @clients[name]
-                @clients[newname] = model
-                @trigger 'connect:' + newname, model
-
-            @clients[name] = channel
-            @trigger 'connect:' + name, channel
-            @trigger 'connect', channel
-
-            channel.on 'disconnect', =>
-              delete @clients[channel.get('name')]
-              @trigger 'disconnect', channel
+            channel = new @channelClass parent: @, nssocket: clientSocket, name: 'ns-' + @channelName()
+            channel.log 'connection received'
+            @receiveConnection channel
 
         @nssocket.listen @get 'port'
 

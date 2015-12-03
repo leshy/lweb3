@@ -31,9 +31,7 @@
       initialize: function() {
         return this.when('engineIo', (function(_this) {
           return function() {
-            return _this.set({
-              name: 'ip-' + _this.ip()
-            });
+            return _this.logger.addTags('ip-' + _this.ip());
           };
         })(this));
       },
@@ -49,24 +47,15 @@
       this.engineIo = engineio.attach(this.http);
       return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
-          var channel, name;
-          channel = new _this.channelClass({
+          var channel;
+          _this.receiveConnection(channel = new _this.channelClass({
             parent: _this,
             engineIo: engineIoClient,
-            logger: _this.logger
-          });
-          name = channel.name();
-          channel.log('Connection Received', {
+            name: 'e-' + _this.channelName()
+          }));
+          return channel.log('Connection Received', {
             headers: engineIoClient.request.headers
           });
-          channel.on('change:name', function(model, newname) {
-            delete _this.clients[name];
-            _this.clients[newname] = model;
-            return _this.trigger('connect:' + newname, model);
-          });
-          _this.clients[name] = channel;
-          _this.trigger('connect:' + name, channel);
-          return _this.trigger('connect', channel);
         };
       })(this));
     },

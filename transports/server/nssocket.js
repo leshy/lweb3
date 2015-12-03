@@ -29,31 +29,18 @@
     },
     defaultChannelClass: exports.nssocketChannel,
     initialize: function() {
-      var idcounter, port;
+      var port;
       port = this.get('port');
-      idcounter = 0;
       this.nssocket = nssocket.createServer((function(_this) {
         return function(clientSocket) {
-          var channel, name;
-          name = ++idcounter;
-          _this.log('connection received ' + idcounter);
+          var channel;
           channel = new _this.channelClass({
             parent: _this,
             nssocket: clientSocket,
-            name: name
+            name: 'ns-' + _this.channelName()
           });
-          channel.on('change:name', function(model, newname) {
-            delete _this.clients[name];
-            _this.clients[newname] = model;
-            return _this.trigger('connect:' + newname, model);
-          });
-          _this.clients[name] = channel;
-          _this.trigger('connect:' + name, channel);
-          _this.trigger('connect', channel);
-          return channel.on('disconnect', function() {
-            delete _this.clients[channel.get('name')];
-            return _this.trigger('disconnect', channel);
-          });
+          channel.log('connection received');
+          return _this.receiveConnection(channel);
         };
       })(this));
       return this.nssocket.listen(this.get('port'));

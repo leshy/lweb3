@@ -32,26 +32,35 @@
       }
     },
     initialize: function(options) {
-      var logger;
-      _.extend(this, options);
       this.set(options);
+      _.extend(this, _.pluck(options, 'name'));
       if (this.get('verbose')) {
         this.verbose = true;
       }
-      if (logger = this.get('logger')) {
-        this.logger = logger;
-      }
-      return this.when('parent', (function(_this) {
-        return function(parent1) {
-          _this.parent = parent1;
+      this.when('parent', (function(_this) {
+        return function(parent) {
+          _this.parent = parent;
           if (_this.parent.verbose) {
             _this.verbose = true;
           }
-          if (_this.logger !== false && _this.parent.logger) {
-            return _this.logger = _this.parent.logger.child({
-              tags: _this.get('name') || 'unnamed'
+          if ((_this.logger == null) && _this.logger !== false && _this.parent.logger) {
+            return _this.set({
+              logger: _this.parent.logger.child({
+                tags: _this.get('name') || 'unnamed'
+              })
             });
           }
+        };
+      })(this));
+      return this.when('logger', (function(_this) {
+        return function(logger) {
+          var oldName;
+          _this.logger = logger;
+          logger.addTags(oldName = _this.get('name') || "unnamed");
+          return _this.on('change:name', function(self, name) {
+            logger.delTags(oldName);
+            return logger.addTags(oldName = name);
+          });
         };
       })(this));
     },
@@ -74,30 +83,7 @@
   });
 
   protocolHost = exports.protocolHost = core.extend4000({
-    initialize: function(options) {
-      if (options == null) {
-        options = {};
-      }
-      this.when('parent', (function(_this) {
-        return function(parent) {
-          if (parent.logger) {
-            return _this.set({
-              logger: parent.logger
-            });
-          }
-        };
-      })(this));
-      this.when('logger', (function(_this) {
-        return function(logger) {
-          var oldName;
-          _this.logger = logger;
-          logger.addTags(oldName = _this.get('name') || "unnamed");
-          return _this.on('change:name', function(self, name) {
-            logger.delTags(oldName);
-            return logger.addTags(oldName = name);
-          });
-        };
-      })(this));
+    initialize: function() {
       return this.protocols = {};
     },
     hasProtocol: function(protocol) {
@@ -153,14 +139,38 @@
   });
 
   server = exports.server = protocolHost.extend4000({
+    channelName: function() {
+      return this.idCounter++;
+    },
     initialize: function() {
       var channelClass;
+      this.idCounter = 1;
       this.clients = this.children = {};
       if (channelClass = this.get('channelClass') || this.channelClass) {
         return this.channelClass = this.defaultChannelClass.extend4000(channelClass);
       } else {
         return this.channelClass = this.defaultChannelClass;
       }
+    },
+    receiveConnection: function(channel) {
+      var name;
+      name = channel.name();
+      this.listenTo(channel, 'change:name', (function(_this) {
+        return function(model, newname) {
+          delete _this.clients[name];
+          _this.clients[newname] = model;
+          return _this.trigger('connect:' + newname, model);
+        };
+      })(this));
+      this.listenToOnce(channel, 'end', (function(_this) {
+        return function() {
+          _this.stopListening(channel);
+          return delete _this.clients[name];
+        };
+      })(this));
+      this.clients[name] = channel;
+      this.trigger('connect:' + name, channel);
+      return this.trigger('connect', channel);
     }
   });
 

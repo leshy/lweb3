@@ -2,8 +2,9 @@ _ = require 'underscore'
 Backbone = require 'backbone4000'
 h = helpers = require 'helpers'
 
-subscriptionMan = require('subscriptionman2')
-validator = require('validator2-extras'); v = validator.v
+subscriptionMan = require 'subscriptionman2'
+validator = require 'validator2-extras'
+v = validator.v
 
 startTime = new Date().getTime()
 
@@ -14,18 +15,26 @@ core = exports.core = subscriptionMan.fancy.extend4000
         data = args.shift()
         tags = args
         console.log msg, tags.join(','), data
+
       if @logger then @logger.log.apply @logger, args
 
     initialize: (options) ->
-        _.extend @, options
         @set options
+        _.extend @, _.pluck options, 'name'
 
         if @get('verbose') then @verbose = true
-        if logger = @get('logger') then @logger = logger
 
         @when 'parent', (@parent) =>
             if @parent.verbose then @verbose = true
-            if @logger isnt false and @parent.logger then @logger = @parent.logger.child( tags: (@get('name') or 'unnamed'))
+            if not @logger? and @logger isnt false and @parent.logger
+              @set logger: @parent.logger.child( tags: (@get('name') or 'unnamed'))
+
+        @when 'logger', (logger) =>
+            @logger = logger
+            logger.addTags oldName = (@get('name') or "unnamed")
+            @on 'change:name', (self,name) ->
+                logger.delTags oldName
+                logger.addTags oldName = name
 
     name: ->
         if @parent then @parent.name() + "-" + @get('name')
@@ -37,17 +46,7 @@ core = exports.core = subscriptionMan.fancy.extend4000
         @trigger 'end'
 
 protocolHost = exports.protocolHost = core.extend4000
-    initialize: (options={}) ->
-        @when 'parent', (parent) =>
-            if parent.logger then @set logger: parent.logger
-
-        @when 'logger', (logger) =>
-            @logger = logger
-            logger.addTags oldName = (@get('name') or "unnamed")
-            @on 'change:name', (self,name) ->
-                logger.delTags oldName
-                logger.addTags oldName = name
-
+    initialize: ->
         @protocols = {}
 
     hasProtocol: (protocol) ->
@@ -81,12 +80,33 @@ protocol = exports.protocol = core.extend4000
 # has events like 'connect' and 'disconnect', provides channel objects
 # has clients dictionary mapping ids to clients
 server = exports.server = protocolHost.extend4000
+    channelName: -> @idCounter++
     initialize: ->
+        @idCounter = 1
+
         @clients = @children = {}
 
         if channelClass = @get('channelClass') or @channelClass
             @channelClass = @defaultChannelClass.extend4000 channelClass
         else @channelClass = @defaultChannelClass
+
+    receiveConnection: (channel) ->
+        name = channel.name()
+
+        @listenTo channel, 'change:name', (model,newname) =>
+            delete @clients[name]
+            @clients[newname] = model
+            @trigger 'connect:' + newname, model
+
+        @listenToOnce channel, 'end', =>
+          @stopListening channel
+          delete @clients[name]
+
+        @clients[name] = channel
+
+        @trigger 'connect:' + name, channel
+        @trigger 'connect', channel
+
 
 # Just a common pattern,
 # this is for model that hosts bunch of models of a same type with names and references to parent
