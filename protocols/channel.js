@@ -94,11 +94,9 @@
     initialize: function() {
       var name;
       name = this.get('name');
-      this.clients = [];
-      return this.log('channel init');
+      return this.clients = [];
     },
     join: function(reply, pattern) {
-      this.log('client joined');
       return this.subscribe(pattern || true, function(msg, next) {
         reply.write(msg);
         return next();
