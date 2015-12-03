@@ -33,7 +33,6 @@
     },
     initialize: function(options) {
       this.set(options);
-      _.extend(this, _.pluck(options, 'name'));
       if (this.get('verbose')) {
         this.verbose = true;
       }
@@ -157,7 +156,7 @@
     },
     receiveConnection: function(channel) {
       var name;
-      name = channel.name();
+      name = channel.get('name');
       this.listenTo(channel, 'change:name', (function(_this) {
         return function(model, newname) {
           delete _this.clients[name];

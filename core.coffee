@@ -20,7 +20,8 @@ core = exports.core = subscriptionMan.fancy.extend4000
 
     initialize: (options) ->
         @set options
-        _.extend @, _.pluck options, 'name'
+#        options = _.omit options, 'name'
+#        _.extend @, options
 
         if @get('verbose') then @verbose = true
 
@@ -92,7 +93,7 @@ server = exports.server = protocolHost.extend4000
         else @channelClass = @defaultChannelClass
 
     receiveConnection: (channel) ->
-        name = channel.name()
+        name = channel.get('name')
 
         @listenTo channel, 'change:name', (model,newname) =>
             delete @clients[name]

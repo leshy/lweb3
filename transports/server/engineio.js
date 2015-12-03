@@ -31,7 +31,7 @@
       initialize: function() {
         return this.when('engineIo', (function(_this) {
           return function() {
-            return _this.logger.addTags('ip-' + _this.ip());
+            return typeof _this.logger === "function" ? _this.logger(addTags('ip-' + _this.ip())) : void 0;
           };
         })(this));
       },

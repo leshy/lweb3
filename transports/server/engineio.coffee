@@ -20,7 +20,7 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
 
     defaultChannelClass: exports.engineIoChannel.extend4000
       initialize: ->
-        @when 'engineIo', => @logger.addTags 'ip-' + @ip()
+        @when 'engineIo', => @logger?addTags 'ip-' + @ip()
 
       ip: ->
         request = @engineIo.request
