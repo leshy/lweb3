@@ -276,17 +276,8 @@
       };
       if (end) {
         msg.end = true;
-        this.log('query end ' + util.inspect(payload, {
-          depth: 0
-        }), {
-          payload: payload
-        }, 'q-' + id);
       } else {
-        this.log('query reply ' + util.inspect(payload, {
-          depth: 0
-        }), {
-          payload: payload
-        }, 'q-' + id);
+
       }
       return this.parent.send(msg);
     },

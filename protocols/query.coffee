@@ -146,8 +146,11 @@ server = exports.server = core.protocol.extend4000
 
     send: (payload,id,end=false) ->
         msg = { type: 'reply', payload: payload, id: id }
-        if end then msg.end = true; @log 'query end ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
-        else @log 'query reply ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
+        if end
+          msg.end = true
+          #@log 'query end ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
+        else
+          #@log 'query reply ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
         @parent.send msg
 
     subscribe: (pattern=true, callback) ->
