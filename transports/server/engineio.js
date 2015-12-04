@@ -27,31 +27,20 @@
     defaults: {
       name: 'EIOServer'
     },
-    defaultChannelClass: exports.engineIoChannel.extend4000({
-      initialize: function() {
-        return this.when('engineIo', (function(_this) {
-          return function() {
-            return typeof _this.logger === "function" ? _this.logger(addTags('ip-' + _this.ip())) : void 0;
-          };
-        })(this));
-      },
-      ip: function() {
-        var ip, request;
-        request = this.engineIo.request;
-        ip = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-        return _.last(ip.split(":"));
-      }
-    }),
+    defaultChannelClass: exports.engineIoChannel,
     initialize: function() {
       this.http = this.get('http');
       this.engineIo = engineio.attach(this.http);
       return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
-          var channel;
+          var channel, ip, request;
+          request = engineIoClient.request;
+          ip = request.headers['x-real-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+          ip = _.last(ip.split(":"));
           _this.receiveConnection(channel = new _this.channelClass({
             parent: _this,
             engineIo: engineIoClient,
-            name: 'e-' + _this.channelName()
+            name: 'e-' + _this.channelName() + "-" + ip
           }));
           return channel.log('Connection Received', {
             headers: engineIoClient.request.headers

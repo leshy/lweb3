@@ -18,14 +18,7 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
     defaults:
         name: 'EIOServer'
 
-    defaultChannelClass: exports.engineIoChannel.extend4000
-      initialize: ->
-        @when 'engineIo', => @logger?addTags 'ip-' + @ip()
-
-      ip: ->
-        request = @engineIo.request
-        ip = request.headers['x-real-ip'] or request.headers['x-forwarded-for'] or request.connection.remoteAddress
-        _.last ip.split(":") # get rid of pesky ipv6. what is ipv6? I don't know.
+    defaultChannelClass: exports.engineIoChannel
 
     initialize: ->
         @http = @get 'http'
@@ -33,7 +26,11 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
         @engineIo = engineio.attach @http
 
         @engineIo.on 'connection', (engineIoClient) =>
-            @receiveConnection channel = new @channelClass parent: @, engineIo: engineIoClient, name: 'e-' + @channelName()
+            request = engineIoClient.request
+            ip = request.headers['x-real-ip'] or request.headers['x-forwarded-for'] or request.connection.remoteAddress
+            ip = _.last ip.split(":") # get rid of pesky ipv6. what is ipv6? I don't know.
+
+            @receiveConnection channel = new @channelClass parent: @, engineIo: engineIoClient, name: 'e-' + @channelName() + "-" + ip
             channel.log 'Connection Received', { headers: engineIoClient.request.headers }
 
 
