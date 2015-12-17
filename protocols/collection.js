@@ -230,7 +230,7 @@
               }
               this$.log('findOne', msg.findOne);
               return c.findModel(msg.findOne, function(err, model){
-                if (err) {
+                if (err || !model) {
                   return callbackToQuery(res)(err);
                 }
                 return model.render(realm, callbackToQuery(res));

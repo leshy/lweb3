@@ -23,7 +23,6 @@ callbackToQuery = exports.callbackToQuery = (res) -> (err,data) ->
   if err then res.end err: err
   else res.end data: data
 
-
 client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     validator:
         timeout: v().Default(3000).Number()
@@ -41,15 +40,16 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
                 else @log 'Q reply', msg.payload, 'q-' + msg.id
 
                 @event msg
-            parent.on 'end', => @end()
+            parent.once 'end', => @end()
 
     endQuery: (id) ->
         @log 'canceling Q' + ' ' + id
         @parent.send { type: 'queryCancel', id: id }
 
-    send: (msg, timeout, callback) ->
+    send: (msg, timeout, callback, callbackTimeout) ->
         if timeout?.constructor is Function
             callback = timeout
+            callbackTimeout = callback
             timeout = @get('timeout')
 
         @parent.send { type: 'query', id: id = helpers.uuid(10), payload: msg }
@@ -62,9 +62,11 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
           if msg.end then unsubscribe(); q.trigger 'end', msg.payload
           helpers.cbc callback, msg.payload, msg.end
 
-        #setTimeout unsubscribe, timeout
-        return q
+        #helpers.wait timeout, ->
+        #  unsubscribe()
+        #  helpers.cbc callbackTimeout
 
+        return q
 
 reply = core.core.extend4000
     initialize: ->

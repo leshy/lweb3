@@ -40,10 +40,12 @@
           _this.receiveConnection(channel = new _this.channelClass({
             parent: _this,
             engineIo: engineIoClient,
-            name: 'e-' + _this.channelName() + "-" + ip
+            name: 'e-' + _this.channelName() + "-" + ip,
+            ip: ip
           }));
+          channel.headers = request.headers;
           return channel.log('Connection Received', {
-            headers: engineIoClient.request.headers
+            headers: request.headers
           });
         };
       })(this));

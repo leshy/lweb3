@@ -132,7 +132,7 @@ serverCollection = exports.serverCollection = collectionInterface.extend4000 do
             if err then return res.end err: 'access denied to collection: ' + err
             @log 'findOne', msg.findOne
             c.findModel msg.findOne, (err,model) ->
-                if err then return callbackToQuery(res)(err)
+                if err or not model then return callbackToQuery(res)(err)
                 model.render realm, callbackToQuery(res)
 
 

@@ -74,7 +74,7 @@
             }
             return _this.event(msg);
           });
-          return parent.on('end', function() {
+          return parent.once('end', function() {
             return _this.end();
           });
         };
@@ -87,10 +87,11 @@
         id: id
       });
     },
-    send: function(msg, timeout, callback) {
+    send: function(msg, timeout, callback, callbackTimeout) {
       var id, q, unsubscribe;
       if ((timeout != null ? timeout.constructor : void 0) === Function) {
         callback = timeout;
+        callbackTimeout = callback;
         timeout = this.get('timeout');
       }
       this.parent.send({
