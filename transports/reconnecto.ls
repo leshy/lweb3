@@ -12,10 +12,23 @@ memBuffer = exports.memBuffer = Backbone.Model.extend4000 do
   shift: -> @buffer.shift()
   empty: -> not @buffer.length
 
+
+memBufferDropper = exports.memBufferDropper = Backbone.Model.extend4000 do
+  initialize: ->
+    @buffer = []
+    @size = @get('size') or 1000
+    
+  push: ->
+    @buffer.push it
+    if @size < @buffer.length then @buffer.shift()
+      
+  shift: -> @buffer.shift()
+  empty: -> not @buffer.length
+
 reconnecto = exports.reconnecto = core.channel.extend4000 core.channelHost, do
   defaults:
     name: 'reconnecto'
-    bufferClass: memBuffer
+    bufferClass: memBufferDropper
     autoconnect: true
     
   initialize: ->
