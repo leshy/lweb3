@@ -20,7 +20,8 @@
 
   nssocketClient = exports.nssocketClient = exports.nssocketChannel.extend4000({
     defaults: {
-      name: 'nssocketClient'
+      name: 'nssocketClient',
+      reconnect: false
     },
     initialize: function() {
       return this.connect();
@@ -32,11 +33,12 @@
       }
       this.set({
         nssocket: nssocket = Nssocket.NsSocket({
-          reconnect: false,
+          reconnect: this.get('reconnect'),
           type: 'tcp4'
         })
       });
-      return nssocket.connect(this.get('host'), this.get('port'));
+      nssocket.connect(this.get('host'), this.get('port'));
+      return this.trigger('connect');
     }
   });
 

@@ -20,9 +20,6 @@ core = exports.core = subscriptionMan.fancy.extend4000
 
     initialize: (options) ->
         @set options
-#        options = _.omit options, 'name'
-#        _.extend @, options
-
         if @get('verbose') then @verbose = true
 
         @when 'parent', (@parent) =>
@@ -79,18 +76,21 @@ channel = exports.channel = protocolHost.extend4000
 protocol = exports.protocol = core.extend4000
     requires: []
 
+channelHost = exports.channelHost = Backbone.Model.extend4000
+  initialize: ->
+    if not @defaultChannelClass then @defaultChannelClass = @get 'defaultChannelClass'
+    if channelClass = @get('channelClass') or @channelClass
+      @channelClass = @defaultChannelClass.extend4000 channelClass
+    else @channelClass = @defaultChannelClass
+
 # has events like 'connect' and 'disconnect', provides channel objects
 # has clients dictionary mapping ids to clients
-server = exports.server = protocolHost.extend4000
+server = exports.server = protocolHost.extend4000 channelHost,
     channelName: -> @idCounter++
     initialize: ->
         @idCounter = 1
 
         @clients = @children = {}
-
-        if channelClass = @get('channelClass') or @channelClass
-            @channelClass = @defaultChannelClass.extend4000 channelClass
-        else @channelClass = @defaultChannelClass
 
     receiveConnection: (channel) ->
         name = channel.get('name')

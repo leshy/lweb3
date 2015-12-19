@@ -12,10 +12,12 @@ _.extend exports, require('../nssocket')
 nssocketClient = exports.nssocketClient = exports.nssocketChannel.extend4000
     defaults:
         name: 'nssocketClient'
+        reconnect: false
 
     initialize: -> @connect()
 
     connect: ->
       if @nssocket then @nssocket.destroy()
-      @set nssocket: nssocket = Nssocket.NsSocket reconnect: false, type: 'tcp4'
+      @set nssocket: nssocket = Nssocket.NsSocket reconnect: @get('reconnect'), type: 'tcp4'
       nssocket.connect @get('host'), @get('port')
+      @trigger 'connect'
