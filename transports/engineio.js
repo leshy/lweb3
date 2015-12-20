@@ -34,7 +34,7 @@
           });
           return _this.engineIo.once('close', function() {
             _this.trigger('disconnect');
-            _this.log("Lost Connection");
+            _this.log("Lost Connection", {}, "disconnect");
             return _this.end();
           });
         };

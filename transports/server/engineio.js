@@ -45,8 +45,9 @@
           }));
           channel.headers = request.headers;
           return channel.log('Connection Received', {
-            headers: request.headers
-          });
+            headers: request.headers,
+            ip: ip
+          }, 'connect');
         };
       })(this));
     },

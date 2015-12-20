@@ -25,7 +25,7 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
 
         @engineIo.once 'close', =>
             @trigger 'disconnect'
-            @log "Lost Connection"
+            @log "Lost Connection", {}, "disconnect"
             @end()
 
       @when 'parent', (parent) =>

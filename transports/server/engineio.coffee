@@ -33,7 +33,7 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
             @receiveConnection channel = new @channelClass parent: @, engineIo: engineIoClient, name: 'e-' + @channelName() + "-" + ip, ip: ip
 
             channel.headers = request.headers
-            channel.log 'Connection Received', { headers: request.headers }
+            channel.log 'Connection Received', { headers: request.headers, ip: ip }, 'connect'
 
 
     end: ->
