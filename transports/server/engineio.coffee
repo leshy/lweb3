@@ -23,7 +23,13 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
     initialize: ->
         @http = @get 'http'
 
-        @engineIo = engineio.attach @http
+        defaultOptions =
+          pingTimeout: 2000
+          pingInterval: 5000
+
+        @engineIo = new engineio _.extend(defaultOptions, (@get('options') or {}))
+
+        @engineIo.attach @http
 
         @engineIo.on 'connection', (engineIoClient) =>
             request = engineIoClient.request

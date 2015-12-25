@@ -29,8 +29,14 @@
     },
     defaultChannelClass: exports.engineIoChannel,
     initialize: function() {
+      var defaultOptions;
       this.http = this.get('http');
-      this.engineIo = engineio.attach(this.http);
+      defaultOptions = {
+        pingTimeout: 2000,
+        pingInterval: 5000
+      };
+      this.engineIo = new engineio(_.extend(defaultOptions, this.get('options') || {}));
+      this.engineIo.attach(this.http);
       return this.engineIo.on('connection', (function(_this) {
         return function(engineIoClient) {
           var channel, ip, request;

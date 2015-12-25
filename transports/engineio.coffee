@@ -16,19 +16,21 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
       @when 'engineIo', (engineIo) =>
         @engineIo = engineIo
 
-        @engineIo.on 'message', (msg) =>
+        @listenTo @engineIo, 'message', (msg) =>
             msg = JSON.parse(msg)
 #            @log '< ' + util.inspect(msg,depth: 0) , msg, 'in'
             @log '< ' + JSON.stringify(msg), msg, 'in'
             @event msg, @realm
             @trigger 'msg', msg
 
-        @engineIo.once 'close', =>
+        @listenToOnce @engineIo, 'close', =>
+            @stopListening @engineIo
             @trigger 'disconnect'
             @log "Lost Connection", {}, "disconnect"
             @end()
 
-        @engineIo.once 'error', =>
+        @listenToOnce @engineIo, 'error', =>
+            @stopListening @engineIo
             @trigger 'disconnect'
             @log "Lost Connection", {}, "disconnect"
             @end()

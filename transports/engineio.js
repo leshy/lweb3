@@ -26,18 +26,20 @@
       this.when('engineIo', (function(_this) {
         return function(engineIo) {
           _this.engineIo = engineIo;
-          _this.engineIo.on('message', function(msg) {
+          _this.listenTo(_this.engineIo, 'message', function(msg) {
             msg = JSON.parse(msg);
             _this.log('< ' + JSON.stringify(msg), msg, 'in');
             _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
           });
-          _this.engineIo.once('close', function() {
+          _this.listenToOnce(_this.engineIo, 'close', function() {
+            _this.stopListening(_this.engineIo);
             _this.trigger('disconnect');
             _this.log("Lost Connection", {}, "disconnect");
             return _this.end();
           });
-          return _this.engineIo.once('error', function() {
+          return _this.listenToOnce(_this.engineIo, 'error', function() {
+            _this.stopListening(_this.engineIo);
             _this.trigger('disconnect');
             _this.log("Lost Connection", {}, "disconnect");
             return _this.end();
