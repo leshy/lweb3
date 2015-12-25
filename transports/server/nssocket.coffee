@@ -17,8 +17,12 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
 
     defaults:
         name: 'nssocketServer'
+        autostart: true
 
     defaultChannelClass: exports.nssocketChannel
+
+    start: ->
+        @nssocket.listen @get 'port'
 
     initialize: ->
         port = @get 'port'
@@ -28,7 +32,7 @@ nssocketServer = exports.nssocketServer = core.server.extend4000 validator.Valid
             channel.log 'connection received'
             @receiveConnection channel
 
-        @nssocket.listen @get 'port'
+        if @get('autostart') is true then @start()
 
     end: ->
         @nssocket.disconnect()

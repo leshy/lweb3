@@ -25,9 +25,13 @@
       port: Number
     },
     defaults: {
-      name: 'nssocketServer'
+      name: 'nssocketServer',
+      autostart: true
     },
     defaultChannelClass: exports.nssocketChannel,
+    start: function() {
+      return this.nssocket.listen(this.get('port'));
+    },
     initialize: function() {
       var port;
       port = this.get('port');
@@ -43,7 +47,9 @@
           return _this.receiveConnection(channel);
         };
       })(this));
-      return this.nssocket.listen(this.get('port'));
+      if (this.get('autostart') === true) {
+        return this.start();
+      }
     },
     end: function() {
       this.nssocket.disconnect();
