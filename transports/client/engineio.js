@@ -38,6 +38,12 @@
       }
       this.ended = true;
       this.engineIo.close();
+      if (typeof this.engineIo === "function") {
+        this.engineIo(typeof transport === "function" ? transport(typeof pollXhr === "function" ? pollXhr(abort()) : void 0) : void 0);
+      }
+      if (typeof this.engineIo === "function") {
+        this.engineIo(typeof transport === "function" ? transport(typeof sendXhr === "function" ? sendXhr(abort()) : void 0) : void 0);
+      }
       return this.trigger('end');
     }
   });

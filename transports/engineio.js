@@ -55,15 +55,6 @@
         };
       })(this));
     },
-    end: function() {
-      if (typeof this.engineIo === "function") {
-        this.engineIo(typeof transport === "function" ? transport(typeof pollXhr === "function" ? pollXhr(abort()) : void 0) : void 0);
-      }
-      if (typeof this.engineIo === "function") {
-        this.engineIo(typeof transport === "function" ? transport(typeof sendXhr === "function" ? sendXhr(abort()) : void 0) : void 0);
-      }
-      return core.channel.prototype.end.call(this);
-    },
     send: function(msg) {
       return this.engineIo.send(JSON.stringify(msg));
     }

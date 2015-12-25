@@ -21,4 +21,6 @@ engineIoClient = exports.engineIoClient = exports.engineIoChannel.extend4000
         if @ended then return
         @ended = true
         @engineIo.close()
+        @engineIo?transport?pollXhr?abort()
+        @engineIo?transport?sendXhr?abort()
         @trigger 'end'
