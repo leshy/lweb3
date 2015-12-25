@@ -25,6 +25,7 @@
     initialize: function() {
       this.when('engineIo', (function(_this) {
         return function(engineIo) {
+          var disconnectListener;
           _this.engineIo = engineIo;
           _this.listenTo(_this.engineIo, 'message', function(msg) {
             msg = JSON.parse(msg);
@@ -32,18 +33,15 @@
             _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
           });
-          _this.listenToOnce(_this.engineIo, 'close', function() {
-            _this.stopListening(_this.engineIo);
+          disconnectListener = function() {
+            _this.engineIo.removeListener('error', disconnectListener);
+            _this.engineIo.removeListener('close', disconnectListener);
             _this.trigger('disconnect');
             _this.log("Lost Connection", {}, "disconnect");
             return _this.end();
-          });
-          return _this.listenToOnce(_this.engineIo, 'error', function() {
-            _this.stopListening(_this.engineIo);
-            _this.trigger('disconnect');
-            _this.log("Lost Connection", {}, "disconnect");
-            return _this.end();
-          });
+          };
+          _this.engineIo.once('error', disconnectListener);
+          return _this.engineIo.once('close', disconnectListener);
         };
       })(this));
       return this.when('parent', (function(_this) {

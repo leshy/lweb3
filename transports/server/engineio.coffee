@@ -26,7 +26,7 @@ engineIoServer = exports.engineIoServer = core.server.extend4000 validator.Valid
         defaultOptions =
           pingTimeout: 2000
           pingInterval: 5000
-
+          transports: 'polling'
         @engineIo = new engineio _.extend(defaultOptions, (@get('options') or {}))
 
         @engineIo.attach @http

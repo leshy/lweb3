@@ -23,17 +23,16 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
             @event msg, @realm
             @trigger 'msg', msg
 
-        @listenToOnce @engineIo, 'close', =>
-            @stopListening @engineIo
+
+        disconnectListener = =>
+            @engineIo.removeListener 'error', disconnectListener
+            @engineIo.removeListener 'close', disconnectListener
             @trigger 'disconnect'
             @log "Lost Connection", {}, "disconnect"
             @end()
 
-        @listenToOnce @engineIo, 'error', =>
-            @stopListening @engineIo
-            @trigger 'disconnect'
-            @log "Lost Connection", {}, "disconnect"
-            @end()
+        @engineIo.once 'error', disconnectListener
+        @engineIo.once 'close', disconnectListener
 
       @when 'parent', (parent) =>
           parent.on 'end', => @end()
