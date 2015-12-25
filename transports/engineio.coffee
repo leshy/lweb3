@@ -38,6 +38,11 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
           parent.on 'end', => @end()
           @on 'msg', (msg) => parent.event msg, @realm
 
+    end: ->
+      @engineIo?transport?pollXhr?abort()
+      @engineIo?transport?sendXhr?abort()
+      core.channel::end.call @
+
     send: (msg) ->
         #@log "> " + util.inspect(msg,depth: 0), msg, "e-out"
 #        @log "> " + JSON.stringify(msg), msg, "out"
