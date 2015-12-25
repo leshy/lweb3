@@ -15,7 +15,6 @@ engineIoClient = exports.engineIoClient = exports.engineIoChannel.extend4000
 
     initialize: ->
         @set engineIo: @engineIo = engineio.Socket(@get('host') or 'ws://' + window?location?host)
-        #@engineIo.binaryType = 'blob'
         @engineIo.on 'open', => @trigger 'connect'
 
     end: ->

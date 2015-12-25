@@ -32,7 +32,12 @@
             _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
           });
-          return _this.engineIo.once('close', function() {
+          _this.engineIo.once('close', function() {
+            _this.trigger('disconnect');
+            _this.log("Lost Connection", {}, "disconnect");
+            return _this.end();
+          });
+          return _this.engineIo.once('error', function() {
             _this.trigger('disconnect');
             _this.log("Lost Connection", {}, "disconnect");
             return _this.end();
