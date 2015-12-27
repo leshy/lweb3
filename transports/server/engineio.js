@@ -32,8 +32,8 @@
       var defaultOptions;
       this.http = this.get('http');
       defaultOptions = {
-        pingTimeout: 2000,
-        pingInterval: 5000
+        pingTimeout: 10000,
+        pingInterval: 10000
       };
       this.engineIo = new engineio(_.extend(defaultOptions, this.get('options') || {}));
       this.engineIo.attach(this.http);
