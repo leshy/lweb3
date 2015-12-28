@@ -25,7 +25,7 @@ callbackToQuery = exports.callbackToQuery = (res) -> (err,data) ->
 
 client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     validator:
-        timeout: v().Default(3000).Number()
+        timeout: v().Default(5000).Number()
 
     defaults:
         name: 'queryClient'
@@ -48,8 +48,8 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
 
     send: (msg, timeout, callback, callbackTimeout) ->
         if timeout?.constructor is Function
-            callback = timeout
             callbackTimeout = callback
+            callback = timeout
             timeout = @get('timeout')
 
         @parent.send { type: 'query', id: id = helpers.uuid(10), payload: msg }
@@ -58,13 +58,14 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
         q = new query parent: @, id: id
 
         q.set unsubscribe: unsubscribe = @subscribe { type: 'reply', id: id }, (msg) =>
+          if cancelTimeout then cancelTimeout(); cancelTimeout = undefined
           q.trigger 'msg', msg.payload, msg.end
           if msg.end then unsubscribe(); q.trigger 'end', msg.payload
           helpers.cbc callback, msg.payload, msg.end
 
-        #helpers.wait timeout, ->
-        #  unsubscribe()
-        #  helpers.cbc callbackTimeout
+        cancelTimeout = helpers.wait timeout, ->
+          unsubscribe()
+          helpers.cbc callbackTimeout
 
         return q
 
@@ -113,7 +114,6 @@ serverServer = exports.serverServer = core.protocol.extend4000
             try
                 callback payload, r, realm
             catch error
-                #console.log "ERROR", error, error.stack
                 @trigger "error", payload, r, realm, error, pattern
 
     initialize: ->
@@ -150,9 +150,9 @@ server = exports.server = core.protocol.extend4000
         msg = { type: 'reply', payload: payload, id: id }
         if end
           msg.end = true
-          #@log 'query end ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
+#          @log 'query end ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
         else
-          #@log 'query reply ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
+#          @log 'query reply ' + util.inspect(payload, depth: 0), { payload: payload }, 'q-' + id
         @parent.send msg
 
     subscribe: (pattern=true, callback) ->

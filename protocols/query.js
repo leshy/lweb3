@@ -50,7 +50,7 @@
 
   client = exports.client = core.protocol.extend4000(validator.ValidatedModel, {
     validator: {
-      timeout: v().Default(3000).Number()
+      timeout: v().Default(5000).Number()
     },
     defaults: {
       name: 'queryClient'
@@ -88,10 +88,10 @@
       });
     },
     send: function(msg, timeout, callback, callbackTimeout) {
-      var id, q, unsubscribe;
+      var cancelTimeout, id, q, unsubscribe;
       if ((timeout != null ? timeout.constructor : void 0) === Function) {
-        callback = timeout;
         callbackTimeout = callback;
+        callback = timeout;
         timeout = this.get('timeout');
       }
       this.parent.send({
@@ -110,6 +110,11 @@
           id: id
         }, (function(_this) {
           return function(msg) {
+            var cancelTimeout;
+            if (cancelTimeout) {
+              cancelTimeout();
+              cancelTimeout = void 0;
+            }
             q.trigger('msg', msg.payload, msg.end);
             if (msg.end) {
               unsubscribe();
@@ -118,6 +123,10 @@
             return helpers.cbc(callback, msg.payload, msg.end);
           };
         })(this))
+      });
+      cancelTimeout = helpers.wait(timeout, function() {
+        unsubscribe();
+        return helpers.cbc(callbackTimeout);
       });
       return q;
     }

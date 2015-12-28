@@ -34,7 +34,7 @@ nssocketChannel = exports.nssocketChannel = core.channel.extend4000
       @end()
 
     @when 'parent', (parent) =>
-      #parent.on 'end', => @end()
+      parent.once 'end', => @end()
       @nssocket.on [ 'data', 'msg' ], (msg) =>
         parent.event msg, @realm
 
