@@ -53,7 +53,7 @@
       if (pattern) {
         msg.pattern = pattern;
       }
-      this.query = this.parent.parent.query(msg, (function(_this) {
+      this.query = this.parent.parent.query(msg, false, (function(_this) {
         return function(msg) {
           callback(msg);
           return _this.event(msg);

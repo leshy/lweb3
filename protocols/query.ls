@@ -8,8 +8,8 @@ validator = require('validator2-extras'); v = validator.v
 core = require '../core'
 util = require 'util'
 
-query = core.core.extend4000
-    end: () ->
+query = core.core.extend4000 do
+    end: ->
         @get('unsubscribe')()
         @parent.endQuery @id
 
@@ -34,13 +34,13 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
         query: _.bind @send, @
 
     initialize: ->
-        @when 'parent', (parent) =>
-            parent.subscribe { type: 'reply', id: String }, (msg) =>
+        @when 'parent', (parent) ~>
+            parent.subscribe { type: 'reply', id: String }, (msg) ~>
                 if msg.end then @log 'Q completed', msg.payload , 'q-' + msg.id
                 else @log 'Q reply', msg.payload, 'q-' + msg.id
 
                 @event msg
-            parent.once 'end', => @end()
+            parent.once 'end', ~> @end()
 
     endQuery: (id) ->
         @log 'canceling Q' + ' ' + id
@@ -57,26 +57,30 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
 
         q = new query parent: @, id: id
 
-        q.set unsubscribe: unsubscribe = @subscribe { type: 'reply', id: id }, (msg) =>
-          if cancelTimeout then cancelTimeout(); cancelTimeout = undefined
+        cancelTimeout = void;
+        
+        q.set unsubscribe: unsubscribe = @subscribe { type: 'reply', id: id }, (msg) ~>
+          if cancelTimeout then cancelTimeout(); cancelTimeout := undefined
           q.trigger 'msg', msg.payload, msg.end
           if msg.end then unsubscribe(); q.trigger 'end', msg.payload
           helpers.cbc callback, msg.payload, msg.end
 
-        cancelTimeout = helpers.wait timeout, ->
-          unsubscribe()
-          helpers.cbc callbackTimeout
+        if timeout
+          cancelTimeout = helpers.wait timeout, ~>
+            @log 'Q timeout', msg, 'q-' + id
+            unsubscribe()
+            helpers.cbc callbackTimeout
 
         return q
 
-reply = core.core.extend4000
+reply = core.core.extend4000 do
     initialize: ->
         @set name: @get 'id'
-        @unsubscribe = @parent.parent.subscribe type: 'queryCancel', id: @get('id'), =>
+        @unsubscribe = @parent.parent.subscribe type: 'queryCancel', id: @get('id'), ~>
             @log 'got query cancel request'
             @cancel()
 
-        @parent.on 'end', => @cancel()
+        @parent.on 'end', ~> @cancel()
 
     write: (msg) ->
 #        if @ended then throw "this reply has ended"
@@ -97,7 +101,7 @@ reply = core.core.extend4000
         @trigger 'end'
 
 
-serverServer = exports.serverServer = core.protocol.extend4000
+serverServer = exports.serverServer = core.protocol.extend4000 do
     defaults:
         name: 'queryServerServer'
 
@@ -105,11 +109,11 @@ serverServer = exports.serverServer = core.protocol.extend4000
         onQuery: _.bind @subscribe, @
         onQueryWait: _.bind @subscribeWait, @
         onQueryOnce: _.bind @subscribeOnce, @
-        onQueryError: (callback) =>
+        onQueryError: (callback) ~>
             @on 'error', callback
 
     subscribe: (pattern,callback) ->
-        subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) =>
+        subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) ~>
             r = new reply(id: id, parent: realm.client.queryServer, realm: realm)
             try
                 callback payload, r, realm
@@ -117,18 +121,18 @@ serverServer = exports.serverServer = core.protocol.extend4000
                 @trigger "error", payload, r, realm, error, pattern
 
     initialize: ->
-        @when 'parent', (parent) =>
-            parent.on 'connect', (client) =>
+        @when 'parent', (parent) ~>
+            parent.on 'connect', (client) ~>
                 client.addProtocol new server verbose: @verbose, core: @
 
-            _.map parent.clients, (client,id) =>
+            _.map parent.clients, (client,id) ~>
                 client.addProtocol new server verbose: @verbose, core: @
 
     channel: (channel) ->
         channel.addProtocol new server verbose: @get 'verbose'
 
 
-server = exports.server = core.protocol.extend4000
+server = exports.server = core.protocol.extend4000 do
     defaults:
         name: 'queryServer'
 
@@ -136,15 +140,15 @@ server = exports.server = core.protocol.extend4000
         onQuery: _.bind @subscribe, @
 
     initialize: ->
-        @when 'core', (core) => @core = core
+        @when 'core', (core) ~> @core = core
 
-        @when 'parent', (parent) =>
-            parent.subscribe { type: 'query', payload: true }, (msg, realm) =>
+        @when 'parent', (parent) ~>
+            parent.subscribe { type: 'query', payload: true }, (msg, realm) ~>
                 @log 'query receive ' + util.inspect(msg.payload, depth: 0), { payload: msg.payload }, 'q-' + msg.id
                 @event msg.payload, msg.id, realm
                 @core?.event msg.payload, msg.id, realm
 
-            parent.on 'end', => @end()
+            parent.on 'end', ~> @end()
 
     send: (payload,id,end=false) ->
         msg = { type: 'reply', payload: payload, id: id }
@@ -156,5 +160,5 @@ server = exports.server = core.protocol.extend4000
         @parent.send msg
 
     subscribe: (pattern=true, callback) ->
-        subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) =>
+        subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) ~>
             callback payload, new reply(id: id, parent: @, realm: realm), realm
