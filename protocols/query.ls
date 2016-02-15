@@ -7,6 +7,7 @@ validator = require('validator2-extras'); v = validator.v
 
 core = require '../core'
 util = require 'util'
+p = require 'bluebird'
 
 query = core.core.extend4000 do
     end: ->
@@ -32,6 +33,7 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
 
     functions: ->
         query: _.bind @send, @
+        queryP: _.bind @sendP, @
 
     initialize: ->
         @when 'parent', (parent) ~>
@@ -45,6 +47,20 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     endQuery: (id) ->
         @log 'canceling Q' + ' ' + id
         @parent.send { type: 'queryCancel', id: id }
+
+    # a bit ugly, but works for now
+    sendP: (msg) -> new p (resolve,reject) ~>
+      ret = []
+      first = true
+      @send msg, (data, end) ->
+        if first and end then return resolve data
+        first = false
+
+        if end
+          if data then ret.push data
+          resolve ret
+        else
+          res.push data
 
     send: (msg, timeout, callback, callbackTimeout) ->
         if timeout?.constructor is Function
@@ -162,3 +178,4 @@ server = exports.server = core.protocol.extend4000 do
     subscribe: (pattern=true, callback) ->
         subscriptionMan.fancy::subscribe.call @, pattern, (payload, id, realm) ~>
             callback payload, new reply(id: id, parent: @, realm: realm), realm
+
