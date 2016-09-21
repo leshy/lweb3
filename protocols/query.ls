@@ -1,3 +1,4 @@
+#autocompile
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 helpers = require 'helpers'
@@ -60,7 +61,7 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
           if data then ret.push data
           resolve ret
         else
-          res.push data
+          ret.push data
 
     send: (msg, timeout, callback, callbackTimeout) ->
         if timeout?.constructor is Function
@@ -105,9 +106,8 @@ reply = core.core.extend4000 do
         return true
 
     end: (msg) ->
-        if not @ended then @ended = true else return
-        @unsubscribe()
         @parent.send msg, @id, true
+        @unsubscribe()
         @trigger 'end'
 
     cancel: ->

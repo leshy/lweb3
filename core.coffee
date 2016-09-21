@@ -48,13 +48,16 @@ core = exports.core = subscriptionMan.fancy.extend4000
     @trigger 'end'
 
 protocolHost = exports.protocolHost = core.extend4000
+  initialize: ->
+    @protocols = {}
+
   hasProtocol: (protocol) ->
     if typeof protocol is 'function' then return Boolean @[protocol::defaults.name]
     if typeof protocol is 'object' then return Boolean @[protocol.name()]
-    throw "what is this?"
+    throw new Error "what is this?"
 
   addProtocol: (protocol) ->
-    if not name = protocol.name() then throw "what is this?"
+    if not name = protocol.name() then throw new Error "what is this?"
 
     if @hasProtocol protocol then return
       #this sometimes throws and I dong't care about it actually. commented
@@ -78,10 +81,10 @@ protocol = exports.protocol = core.extend4000
 
 channelHost = exports.channelHost = Backbone.Model.extend4000
   initialize: ->
-  if not @defaultChannelClass then @defaultChannelClass = @get 'defaultChannelClass'
-  if channelClass = @get('channelClass') or @channelClass
-    @channelClass = @defaultChannelClass.extend4000 channelClass
-  else @channelClass = @defaultChannelClass
+    if not @defaultChannelClass then @defaultChannelClass = @get 'defaultChannelClass'
+    if channelClass = @get('channelClass') or @channelClass
+      @channelClass = @defaultChannelClass.extend4000 channelClass
+    else @channelClass = @defaultChannelClass
 
 # has events like 'connect' and 'disconnect', provides channel objects
 # has clients dictionary mapping ids to clients
