@@ -16,8 +16,8 @@
     initialize: function(){
       var this$ = this;
       this.process = this.get('process');
-      this.process.on('message', function(it){
-        return this$.event(it, this$.realm);
+      this.process.on('message', function(msg, handle){
+        return this$.event(msg, this$.realm);
       });
       this.process.on('disconnect', function(){
         return this$.end();

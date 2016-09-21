@@ -18,5 +18,4 @@ export ipcClient = ipcChannel.extend4000 do
     name: 'ipcClient'
     process: process
 
-  initialize: ->
-    @send ready: true
+  initialize: -> @send ready: true

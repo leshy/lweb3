@@ -19,6 +19,9 @@ export ipcServer = core.server.extend4000 do
     fork: (...args) -> new p (resolve,reject) ~> 
       child = cp.fork.apply cp, args
       @receiveConnection channel = new @channelClass parent: @, process: child, name: "proc-#{ child.pid }"
-      channel.subscribeOnce ready: true, -> resolve channel
+      channel.subscribeOnce ready: true, ->
+        if msg then channel.send msg
+        resolve channel
       channel
+      
       
