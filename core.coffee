@@ -1,3 +1,4 @@
+# autocompile
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 h = helpers = require 'helpers'
@@ -9,6 +10,8 @@ v = validator.v
 startTime = new Date().getTime()
 
 core = exports.core = subscriptionMan.fancy.extend4000
+    mergers: [ Backbone.metaMerger.chainF 'end' ]
+
     log: (args...) ->
       if @verbose
         msg = args.shift()
@@ -89,16 +92,15 @@ server = exports.server = protocolHost.extend4000 channelHost,
     channelName: -> @idCounter++
     initialize: ->
         @idCounter = 1
-
         @clients = @children = {}
 
     receiveConnection: (channel) ->
         name = channel.get('name')
 
-        @listenTo channel, 'change:name', (model,newname) =>
+        @listenTo channel, 'change:name', (channel, newname) =>
             delete @clients[name]
-            @clients[newname] = model
-            @trigger 'connect:' + newname, model
+            @clients[newname] = channel
+            @trigger 'connect:' + newname, channel
 
         @listenToOnce channel, 'end', =>
           @stopListening channel
@@ -107,7 +109,10 @@ server = exports.server = protocolHost.extend4000 channelHost,
         @clients[name] = channel
 
         @trigger 'connect:' + name, channel
+
         @trigger 'connect', channel
+
+        return channel
 
 
 # Just a common pattern,

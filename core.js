@@ -18,6 +18,7 @@
   startTime = new Date().getTime();
 
   core = exports.core = subscriptionMan.fancy.extend4000({
+    mergers: [Backbone.metaMerger.chainF('end')],
     log: function() {
       var args, data, msg, tags;
       args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
@@ -166,10 +167,10 @@
       var name;
       name = channel.get('name');
       this.listenTo(channel, 'change:name', (function(_this) {
-        return function(model, newname) {
+        return function(channel, newname) {
           delete _this.clients[name];
-          _this.clients[newname] = model;
-          return _this.trigger('connect:' + newname, model);
+          _this.clients[newname] = channel;
+          return _this.trigger('connect:' + newname, channel);
         };
       })(this));
       this.listenToOnce(channel, 'end', (function(_this) {
@@ -180,7 +181,8 @@
       })(this));
       this.clients[name] = channel;
       this.trigger('connect:' + name, channel);
-      return this.trigger('connect', channel);
+      this.trigger('connect', channel);
+      return channel;
     }
   });
 
