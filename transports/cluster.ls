@@ -3,9 +3,9 @@
 require! { 
   underscore: _
   backbone4000: Backbone
-  helpers
   subscriptionman2: subscriptionMan
   '../core'
+  helpers
   util
   cluster
 }

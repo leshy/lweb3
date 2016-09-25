@@ -5,6 +5,7 @@ require! {
   chai: { expect }
   leshdash: { head, rpad, lazy, union, assign, omit, map, curry, times, keys, first, wait, head, pwait }
   bluebird: p
+  '../index.ls': lweb
 }
 
 describe 'cluster', ->
@@ -15,4 +16,8 @@ describe 'cluster', ->
     
     bus.msg { role: "task" }, bla: 3
     bus.query { role: "task" }, { getCpun: true }, (msg) -> true
+
+  specify 'bus', ->
     
+    node = new lweb.bus.redis()
+    node.addTag test: 'lala', xx: '3', blblb: 'fa'

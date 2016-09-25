@@ -3,33 +3,40 @@
 require! {
   redis
   crypto
-  leshdash: { map, flattenDeep }
+  leshdash: { keys, map, flattenDeep, omit }
   'backbone4000/extras': Backbone
+  bluebird: p
   subscriptionman2: subscriptionMan
   '../core'
 }
-export redis = core.bus.extend4000 do
+
+module.exports = core.bus.extend4000 do
   initialize: ->
+    @tags = {  }
     if not @get('name') then @set name: crypto.randomBytes(32).toString 'base64'
     @pub = redis.createClient!
     @sub = redis.createClient!
+    @subscribed = false
 
-    @sub.subscribe "name:#{ @get 'name' }"
 
-  addTag: (tag, data=true) ->
-    p.all do
-      if data isnt true then @sub.subscribe "bus," tag + ":" + data else true
-      @sub.subscribe "bus." + tag
+  updateSub: ->
+    sub = ~> new p (resolve,reject) ~> 
+      @sub.subscribe subName = "bus/" + map((keys @tags).sort!, ~> it + ":" + @tags[ it ]).join '|'
+      @sub.once 'subscribe', ~>
+        console.log "SUB!", subName
+        @subscribed = true
+        resolve!
+
+    if @subscribed
+      @sub.once 'unsubscribe', sub
+      @sub.unsubscribe!
       
-    .then ~> Backbone.Tagged::addTag.call @, tag, data
-
-  delTag: (tag) ->
-    val = @tags[ tag ]
-    p.all do
-      if val isnt true then @sub.unsubscribe "bus," tag + ":" + val else true
-      @sub.unsubscribe "bus." + tag
-      
-    .then ~> Backbone.Tagged::delTag.call @, tag, data
-
-
+    else sub!
     
+  addTag: (data) ->
+    @tags <<< data
+    @updateSub!
+    
+  delTag: (tag) ->
+    @tags = omit @tags, tag
+    @updateSub!
