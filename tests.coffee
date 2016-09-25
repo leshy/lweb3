@@ -28,7 +28,6 @@ gimmeEnv = (callback) ->
             helpers.wait 10, -> test.done()
 
 
-
 exports.init = (test) ->
     gimmeEnv (lwebs, s, c, done) ->
         done test
@@ -178,55 +177,55 @@ exports.CollectionProtocol = (test) ->
 ###
 
 
-exports.CollectionProtocolPermissions = (test) ->
-    mongodb = require 'mongodb'
-    channel = require('./protocols/channel')
-    query = require('./protocols/query')
-    collectionProtocol = require './protocols/collection'
-    collectionsS = require 'collections/serverside'
-    collectionsC = require 'collections'
-    gimmeEnv (lwebs,s,c,done) ->
-        helpers.wait 100, ->
-            db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
-            db.open (err,data) ->
-                if err then test.fail err
-                s.addProtocol new query.server verbose: false
-                s.addProtocol new channel.server verbose: false
-                s.addProtocol new collectionProtocol.server verbose: false
+# exports.CollectionProtocolPermissions = (test) ->
+#     mongodb = require 'mongodb'
+#     channel = require('./protocols/channel')
+#     query = require('./protocols/query')
+#     collectionProtocol = require './protocols/collection'
+#     collectionsS = require 'collections/serverside'
+#     collectionsC = require 'collections'
+#     gimmeEnv (lwebs,s,c,done) ->
+#         helpers.wait 100, ->
+#             db = new mongodb.Db 'testdb', new mongodb.Server('localhost', 27017), safe: true
+#             db.open (err,data) ->
+#                 if err then test.fail err
+#                 s.addProtocol new query.server verbose: false
+#                 s.addProtocol new channel.server verbose: false
+#                 s.addProtocol new collectionProtocol.server verbose: false
 
-                c.addProtocol new query.client verbose: false
-                c.addProtocol new channel.client verbose: false
-                c.addProtocol new collectionProtocol.client
-                    verbose: false
-                    collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
+#                 c.addProtocol new query.client verbose: false
+#                 c.addProtocol new channel.client verbose: false
+#                 c.addProtocol new collectionProtocol.client
+#                     verbose: false
+#                     collectionClass: collectionsC.ModelMixin.extend4000 collectionsC.ReferenceMixin, collectionProtocol.clientCollection
 
-                mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
-                serverM = mongoCollection.defineModel 'bla',
-                    permissions: collectionsS.definePermissions (write, execute, read) ->
-                        write 'test', new collectionsS.Permission()
+#                 mongoCollection = new collectionsS.MongoCollection collection: 'bla', db: db
+#                 serverM = mongoCollection.defineModel 'bla',
+#                     permissions: collectionsS.definePermissions (write, execute, read) ->
+#                         write 'test', new collectionsS.Permission()
 
-                serverC = s.collection 'bla',
-                    collection: mongoCollection
-                    broadcast: '*'
-                    permissions: (perm) ->
-                        perm.create true
+#                 serverC = s.collection 'bla',
+#                     collection: mongoCollection
+#                     broadcast: '*'
+#                     permissions: (perm) ->
+#                         perm.create true
 
-                #console.log serverC.permissions
+#                 #console.log serverC.permissions
 
-                clientC = c.collection 'bla'
-                clientM = clientC.defineModel 'bla', {}
+#                 clientC = c.collection 'bla'
+#                 clientM = clientC.defineModel 'bla', {}
 
-                x = new clientM({test:'data' })
+#                 x = new clientM({test:'data' })
 
-                x.flush (err,data) ->
-                    if err then test.error err
-                    x.remove (err,data) ->
-                        #console.log err,data
-                        if not err then test.error 'remove passed'
-                        serverC.permissions.remove.push { matchMsg: v(true) }
-                        x.remove (err,data) ->
-                            if err then test.error 'remove didnt pass'
-                            done test
+#                 x.flush (err,data) ->
+#                     if err then test.error err
+#                     x.remove (err,data) ->
+#                         #console.log err,data
+#                         if not err then test.error 'remove passed'
+#                         serverC.permissions.remove.push { matchMsg: v(true) }
+#                         x.remove (err,data) ->
+#                             if err then test.error 'remove didnt pass'
+#                             done test
 
 class Test
     done: ->

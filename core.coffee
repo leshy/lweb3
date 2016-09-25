@@ -1,6 +1,6 @@
 # autocompile
 _ = require 'underscore'
-Backbone = require 'backbone4000'
+Backbone = require 'backbone4000/extras'
 h = helpers = require 'helpers'
 
 subscriptionMan = require 'subscriptionman2'
@@ -19,7 +19,11 @@ core = exports.core = subscriptionMan.fancy.extend4000
       tags = args
       console.log msg, tags.join(','), data
 
-    if @logger then @logger.log.apply @logger, args
+    if @logger
+      if args.length is 1 then args.push undefined
+      args.push 'lweb'
+      args.push @get 'name'
+      @logger.log.apply @logger, args
 
   initialize: (options) ->
     @set options
@@ -28,15 +32,10 @@ core = exports.core = subscriptionMan.fancy.extend4000
     @when 'parent', (@parent) =>
       if @parent.verbose then @verbose = true
       if not @logger? and @logger isnt false and @parent.logger
-        @set logger: @parent.logger.child( tags: (@get('name') or 'unnamed'))
+        @set logger: @parent.logger.child()
 
     @when 'logger', (logger) =>
       @logger = logger
-      if not logger then return
-      logger.addTags oldName = (@get('name') or "unnamed")
-      @on 'change:name', (self,name) ->
-        logger.delTags oldName
-        logger.addTags oldName = name
 
   name: ->
     if @parent then @parent.name() + "-" + @get('name')
@@ -70,6 +69,10 @@ protocolHost = exports.protocolHost = core.extend4000
 
     if protocol.functions then _.extend @, protocol.functions()
 
+bus = exports.bus = protocolHost.extend4000 Backbone.Tagged,
+  send:   -> throw 'not implemented'
+  addTag: -> throw 'not implemented'
+  delTag: -> throw 'not implemented'
 
 channel = exports.channel = protocolHost.extend4000
   initialize: -> @realm = @getRealm()

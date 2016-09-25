@@ -22,6 +22,7 @@ export ipcChannel = core.channel.extend4000 validator.validatedModel, do
     @process.on 'disconnect', ~> @end!
     @process.on 'error', ~> @end!
     @process.on 'exit', ~> @end!
+    @process.on 'close', ~> @end!
     
   send: -> @process.send it
 

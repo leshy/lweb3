@@ -46,7 +46,8 @@
     functions: function(){
       return {
         query: _.bind(this.send, this),
-        queryP: _.bind(this.sendP, this)
+        queryP: _.bind(this.sendP, this),
+        pquery: _.bind(this.sendP, this)
       };
     },
     initialize: function(){

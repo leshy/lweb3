@@ -10,6 +10,7 @@ core = require '../core'
 util = require 'util'
 p = require 'bluebird'
 
+
 query = core.core.extend4000 do
     end: ->
         @get('unsubscribe')()
@@ -35,6 +36,7 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     functions: ->
         query: _.bind @send, @
         queryP: _.bind @sendP, @
+        pquery: _.bind @sendP, @
 
     initialize: ->
         @when 'parent', (parent) ~>
@@ -53,6 +55,7 @@ client = exports.client = core.protocol.extend4000 validator.ValidatedModel,
     sendP: (msg) -> new p (resolve,reject) ~>
       ret = []
       first = true
+      
       @send msg, (data, end) ->
         if first and end then return resolve data
         first = false

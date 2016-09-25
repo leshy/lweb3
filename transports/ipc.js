@@ -25,7 +25,10 @@
       this.process.on('error', function(){
         return this$.end();
       });
-      return this.process.on('exit', function(){
+      this.process.on('exit', function(){
+        return this$.end();
+      });
+      return this.process.on('close', function(){
         return this$.end();
       });
     },

@@ -10,6 +10,12 @@ require! {
 
 validator = require('validator2-extras'); v = validator.v
 
+export ipcConnection = ipcChannel.extend4000 do
+  initialize: ->
+    @set name: @process.pid
+    @on 'end', -> console.log "child process exited"
+      
+
 export ipcServer = core.server.extend4000 do
     defaults:
       name: 'ipcServer'
@@ -18,8 +24,7 @@ export ipcServer = core.server.extend4000 do
 
     fork: (...args) -> new p (resolve,reject) ~>
       child = cp.fork.apply cp, args
-      @receiveConnection channel = new @channelClass parent: @, process: child, name: "proc-#{ child.pid }"
+      @receiveConnection channel = new @channelClass parent: @, process: child, name: "ipc-#{ child.pid }"
       channel.subscribeOnce ready: true, -> resolve channel
       channel
-      
       
