@@ -19,5 +19,10 @@ describe 'cluster', ->
 
   specify 'bus', ->
     
-    node = new lweb.bus.redis()
+    node = new lweb.bus.redis verbose: true
     node.addTag test: 'lala', xx: '3', blblb: 'fa'
+    .then ->
+      console.log "SUB DONE"
+      node.send { xx: true , test: 'lala'}, { bla: 3 }
+      wait 1000, -> console.log 'done'
+      

@@ -11,27 +11,29 @@ require! {
 }
 
 module.exports = core.bus.extend4000 do
+
   initialize: ->
-    @tags = {  }
+    @tags = {}
     if not @get('name') then @set name: crypto.randomBytes(32).toString 'base64'
     @pub = redis.createClient!
     @sub = redis.createClient!
-    @subscribed = false
+    @sub.on 'pmessage', (pattern,channel,message) -> console.log "MSG IN", message
 
+  send: (to, msg) -> 
+    console.log "bus/" + @makeName(to, "|")
 
-  updateSub: ->
-    sub = ~> new p (resolve,reject) ~> 
-      @sub.subscribe subName = "bus/" + map((keys @tags).sort!, ~> it + ":" + @tags[ it ]).join '|'
-      @sub.once 'subscribe', ~>
-        console.log "SUB!", subName
-        @subscribed = true
-        resolve!
-
-    if @subscribed
-      @sub.once 'unsubscribe', sub
-      @sub.unsubscribe!
+  makeName: (data, separator=" ") ->
+    map((keys data).sort!, ~>
+      if (val = data[ it ]) is true then val = ""
+      it + ":" + val).join separator 
+  
+  updateSub: -> new p (resolve,reject) ~> 
+    subscribe = ~>
+      @each @tags, (value, key) -> if value then true
       
-    else sub!
+    if not @_subscribed then return subscribe!
+    @sub.unsubscribe!
+    @sub.once 'unsubscribe', subscribe
     
   addTag: (data) ->
     @tags <<< data
@@ -40,3 +42,5 @@ module.exports = core.bus.extend4000 do
   delTag: (tag) ->
     @tags = omit @tags, tag
     @updateSub!
+
+

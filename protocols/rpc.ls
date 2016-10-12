@@ -10,8 +10,8 @@ require! {
   subscriptionman2: subscriptionMan
   '../core'
   './query'
-
 }
+
 validator = require('validator2-extras'); v = validator.v
 
 export class remoteObject
@@ -56,6 +56,6 @@ export server = core.protocol.extend4000 do
           .then (res) -> reply.end data: res
           .catch (err) -> reply.end err: err
           
-          
     remoteObject: (name, obj) ->
       @remoteObjects[name] = obj
+
