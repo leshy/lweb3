@@ -1,3 +1,4 @@
+#autocompile
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 helpers = require 'helpers'
@@ -18,6 +19,8 @@ nssocketClient = exports.nssocketClient = exports.nssocketChannel.extend4000
 
     connect: ->
       if @nssocket then @nssocket.destroy()
-      @set nssocket: nssocket = Nssocket.NsSocket reconnect: @get('reconnect'), type: 'tcp4'
-      nssocket.connect @get('host'), @get('port')
+      @set nssocket: @nssocket = Nssocket.NsSocket reconnect: @get('reconnect'), type: 'tcp4'
+      @nssocket.on 'reconnect', (bla) -> console.log 'nssocket evnet', bla
+
+      @nssocket.connect @get('host'), @get('port')
       @trigger 'connect'

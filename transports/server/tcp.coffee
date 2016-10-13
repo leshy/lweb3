@@ -1,3 +1,4 @@
+#autocompile
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 helpers = require 'helpers'
@@ -31,6 +32,7 @@ tcpServer = exports.tcpServer = core.server.extend4000 validator.ValidatedModel,
                 @log 'connection received', idcounter
 
                 channel = new @channelClass parent: @, socket: socket, name: name
+
                 channel.on 'change:name', (model,newname) =>
                     delete @clients[name]
                     @clients[newname] = model

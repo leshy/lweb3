@@ -1,3 +1,4 @@
+#autocompile
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 helpers = require 'helpers'
@@ -14,18 +15,18 @@ tcpSocketChannel = exports.tcpSocketChannel = core.channel.extend4000
     initialize: ->
         @when 'socket', (@socket) =>
             @socket.on 'data', (msg) =>
-                msg = String(msg)
+                msg = JSON.parse String msg
                 @log "<", msg
                 @event msg, @realm
+                @trigger 'msg', msg
 
             @socket.on 'connect', => @trigger 'connect'
             @socket.on 'end', => @trigger 'disconnect'
 
+
         @when 'parent', (parent) =>
-            @socket.on 'data', (msg) =>
-                msg = String(msg)
-                parent.event msg, @realm
+          @on 'msg', (msg) => parent.event msg, @realm
 
     send: (msg) ->
         @log ">", msg
-        @socket.write msg
+        @socket.write JSON.stringify msg

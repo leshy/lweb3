@@ -39,6 +39,5 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
           @on 'msg', (msg) => parent.event msg, @realm
 
     send: (msg) ->
-        #@log "> " + util.inspect(msg,depth: 0), msg, "e-out"
 #        @log "> " + JSON.stringify(msg), msg, "out"
         @engineIo.send JSON.stringify msg

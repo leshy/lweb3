@@ -27,17 +27,19 @@
       return this.connect();
     },
     connect: function() {
-      var nssocket;
       if (this.nssocket) {
         this.nssocket.destroy();
       }
       this.set({
-        nssocket: nssocket = Nssocket.NsSocket({
+        nssocket: this.nssocket = Nssocket.NsSocket({
           reconnect: this.get('reconnect'),
           type: 'tcp4'
         })
       });
-      nssocket.connect(this.get('host'), this.get('port'));
+      this.nssocket.on('reconnect', function(bla) {
+        return console.log('nssocket evnet', bla);
+      });
+      this.nssocket.connect(this.get('host'), this.get('port'));
       return this.trigger('connect');
     }
   });
