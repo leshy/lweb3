@@ -13,20 +13,28 @@ tcpSocketChannel = exports.tcpSocketChannel = core.channel.extend4000
         name: 'tcp'
 
     initialize: ->
-        @when 'socket', (@socket) =>
-            @socket.on 'data', (msg) =>
-                msg = JSON.parse String msg
-                @log "<", msg
-                @event msg, @realm
-                @trigger 'msg', msg
 
-            @socket.on 'connect', => @trigger 'connect'
-            @socket.on 'end', => @trigger 'disconnect'
+      @when 'parent', (parent) =>
+        @on 'msg', (msg) => parent.event msg, @realm
 
+      @when 'socket', (@socket) =>
+        @socket.on 'data', (msg) =>
+          try
+            msg = JSON.parse String msg
+          catch
+            return @end()
 
-        @when 'parent', (parent) =>
-          @on 'msg', (msg) => parent.event msg, @realm
+          @log "<", msg
+          @event msg, @realm
+          @trigger 'msg', msg
+
+        @socket.on 'connect', => @trigger 'connect'
+        @socket.on 'end', => @end()
 
     send: (msg) ->
-        @log ">", msg
-        @socket.write JSON.stringify msg
+      @log ">", msg
+      @socket.write JSON.stringify msg
+
+    end: ->
+      @socket.destroy()
+      core.channel::end.call @

@@ -21,11 +21,22 @@
       name: 'tcp'
     },
     initialize: function() {
-      this.when('socket', (function(_this) {
+      this.when('parent', (function(_this) {
+        return function(parent) {
+          return _this.on('msg', function(msg) {
+            return parent.event(msg, _this.realm);
+          });
+        };
+      })(this));
+      return this.when('socket', (function(_this) {
         return function(socket) {
           _this.socket = socket;
           _this.socket.on('data', function(msg) {
-            msg = JSON.parse(String(msg));
+            try {
+              msg = JSON.parse(String(msg));
+            } catch (_error) {
+              return _this.end();
+            }
             _this.log("<", msg);
             _this.event(msg, _this.realm);
             return _this.trigger('msg', msg);
@@ -34,14 +45,7 @@
             return _this.trigger('connect');
           });
           return _this.socket.on('end', function() {
-            return _this.trigger('disconnect');
-          });
-        };
-      })(this));
-      return this.when('parent', (function(_this) {
-        return function(parent) {
-          return _this.on('msg', function(msg) {
-            return parent.event(msg, _this.realm);
+            return _this.end();
           });
         };
       })(this));
@@ -49,6 +53,10 @@
     send: function(msg) {
       this.log(">", msg);
       return this.socket.write(JSON.stringify(msg));
+    },
+    end: function() {
+      this.socket.destroy();
+      return core.channel.prototype.end.call(this);
     }
   });
 
