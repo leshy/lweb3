@@ -5,5 +5,5 @@ require! {
 }
   
 export autoIndex do
-  path.resolve(__dirname) + "/index.ls"
+  __dirname
   new RegExp /js$/
