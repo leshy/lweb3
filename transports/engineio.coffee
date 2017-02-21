@@ -23,7 +23,6 @@ engineIoChannel = exports.engineIoChannel = core.channel.extend4000
             @event msg, @realm
             @trigger 'msg', msg
 
-
         disconnectListener = =>
             @engineIo.removeListener 'error', disconnectListener
             @engineIo.removeListener 'close', disconnectListener
