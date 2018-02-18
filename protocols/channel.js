@@ -34,6 +34,9 @@
   });
 
   clientChannel = core.core.extend4000({
+    subscribe: function(pattern, callback) {
+      return this.join(pattern, callback);
+    },
     join: function(pattern, callback) {
       var msg, name;
       name = this.get('name');
@@ -94,16 +97,17 @@
     initialize: function() {
       var name;
       name = this.get('name');
-      return this.clients = [];
+      this.clients = [];
+      return this.log('channel init');
     },
     join: function(reply, pattern) {
+      this.log('client joined');
       return this.subscribe(pattern || true, function(msg, next) {
         reply.write(msg);
         return next();
       });
     },
     broadcast: function(msg) {
-      this.log('broadcast', msg);
       return this.event(msg);
     },
     end: function(msg) {

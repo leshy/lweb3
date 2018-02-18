@@ -142,4 +142,4 @@ motherShip = exports.motherShip = (name) ->
     @trigger 'new' + helpers.capitalize(name), instance
     return instance
 
-  Backbone.Model.extend4000 model
+  return model

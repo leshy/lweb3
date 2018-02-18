@@ -1,3 +1,4 @@
+#autocompile
 _ = require 'underscore'
 Backbone = require 'backbone4000'
 helpers = require 'helpers'
@@ -16,6 +17,8 @@ channelInterface = core.protocol.extend4000 core.motherShip('channel'),
     broadcast: (name,message) -> @channel(name).broadcast message
 
 clientChannel = core.core.extend4000
+    subscribe: (pattern, callback) -> @join pattern, callback
+
     join: (pattern, callback) ->
         name = @get 'name'
         @log 'join'
@@ -34,7 +37,6 @@ clientChannel = core.core.extend4000
     part: ->
         @joined = false
         @query.end()
-
 
 client = exports.client = channelInterface.extend4000
     defaults:
@@ -57,10 +59,10 @@ serverChannel = core.core.extend4000
     initialize: ->
         name = @get 'name'
         @clients = []
-#        @log 'channel init'
+        @log 'channel init'
 
     join: (reply,pattern) ->
-#        @log 'client joined'
+        @log 'client joined'
         #reply.write { joined: true }
 
         @subscribe pattern or true, (msg,next) ->
@@ -68,7 +70,7 @@ serverChannel = core.core.extend4000
             next()
 
     broadcast: (msg) ->
-        @log 'broadcast', msg
+#        @log 'broadcast', msg
         @event msg
 
     end: (msg) ->

@@ -222,7 +222,7 @@
       this.trigger('new' + helpers.capitalize(name), instance);
       return instance;
     };
-    return Backbone.Model.extend4000(model);
+    return model;
   };
 
 }).call(this);

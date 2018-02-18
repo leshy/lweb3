@@ -29,4 +29,4 @@ Bus = Backbone.Tagged.extend4000 do
 
 export autoIndex do
   __dirname
-  new RegExp /js$/
+  ignore: new RegExp /js$/

@@ -6,4 +6,4 @@ require! {
   
 export autoIndex do
   __dirname
-  new RegExp /js$/
+  ignore: new RegExp /js$/
